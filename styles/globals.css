@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body{
+  overflow-y: hidden;
+}
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5); 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .overlay-content {
+    position: relative;
+    width: 85%; 
+    height: 39%;
+  }
+  
+  .flashing-border {
+    animation: flashing 1s infinite alternate;
+  }
+  
+  @keyframes flashing {
+    0% {
+      border: 2px solid transparent;
+    }
+    100% {
+      border: 2px solid cyan; 
+    }
+  }
+  
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  .w-8 {
+    width: 2rem; 
+  }
+  
+  .h-8 {
+    height: 2rem;
+  }
+  
+  .text-accent-default {
+    color: #4fd1c5; 
+  }
+  
+  .fill-beige {
+    fill: #f5f5dc; 
+  }
+  
+  
+  .svg-center {
+    display: block;
+    margin: auto;
+  }
+  
