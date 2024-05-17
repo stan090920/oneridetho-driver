@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
-// import { Twilio } from 'twilio'; // Comment out Twilio import
+import { Twilio } from 'twilio';
 
 const prisma = new PrismaClient();
-// const twilioClient = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN); // Comment out Twilio initialization
+const twilioClient = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 export default async function handler(
   req: NextApiRequest, 
@@ -38,21 +38,20 @@ export default async function handler(
         include: { user: true },
       });
 
-      // Bypass Twilio logic
-      // if (status === 'InProgress' && updatedRide.user && updatedRide.user.phone) {
-      //   await twilioClient.messages.create({
-      //     body: 'Your driver has arrived, you have 5 minutes to enter the vehicle, otherwise your ride will be cancelled.',
-      //     from: process.env.TWILIO_PHONE_NUMBER,
-      //     to: updatedRide.user.phone,
-      //   });
-      // } else if (status === 'Completed' && updatedRide.user && updatedRide.user.phone) {
-      //   const ratingLink = `https://driver-oneridetho.vercel.app/ride/${rideIdNumber}`;
-      //   await twilioClient.messages.create({
-      //     body: `Thank you or riding with us. Please rate your driver here: ${ratingLink}`,
-      //     from: process.env.TWILIO_PHONE_NUMBER,
-      //     to: updatedRide.user.phone,
-      //   });
-      // }
+      if (status === 'InProgress' && updatedRide.user && updatedRide.user.phone) {
+        await twilioClient.messages.create({
+          body: 'Your driver has arrived, you have 5 minutes to enter the vehicle, otherwise your ride will be cancelled.',
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to: updatedRide.user.phone,
+        });
+      } else if (status === 'Completed' && updatedRide.user && updatedRide.user.phone) {
+        const ratingLink = `https://oneridetho-driver.vercel.app/ride/${rideIdNumber}`;
+        await twilioClient.messages.create({
+          body: `Thank you or riding with us. Please rate your driver here: ${ratingLink}`,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to: updatedRide.user.phone,
+        });
+      }
 
       res.status(200).json(updatedRide);
 
