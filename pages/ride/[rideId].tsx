@@ -246,8 +246,12 @@ const RidePage = () => {
 
       // Check if the driver is near the pickup location
       if (!isDriverNearPickup()) {
-        alert("You are not yet at the pickup location.");
-        return;
+        const proceed = window.confirm(
+          "You are not yet at the pickup location. Do you want to mark the ride as arrived anyway?"
+        );
+        if (!proceed) {
+          return;
+        }
       }
 
       try {
