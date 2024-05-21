@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -21,10 +22,10 @@ export default NextAuth({
           where: { email: credentials.email },
         });
 
-        if (driver && credentials.password === driver.password) {
+        if (driver && await bcrypt.compare(credentials.password, driver.password)) {
           return {
             id: driver.id,
-            email: driver.email
+            email: driver.email,
           };
         } else {
           return null;
@@ -42,7 +43,7 @@ export default NextAuth({
     },
     async session({ session, token }) {
       if (token.id) {
-        session.user.id = token.id as number; 
+        session.user.id = token.id as number;
       }
       return session;
     },
