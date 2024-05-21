@@ -145,7 +145,6 @@ const Dashboard = () => {
       }
 
       const payload = JSON.stringify({ driverId });
-      console.log('Payload:', payload);
 
       const acceptResponse = await fetch(`/api/rides/accept/${rideId}`, {
         method: "POST",

@@ -1,5 +1,3 @@
-// pages/ratings.tsx
-
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
@@ -32,7 +30,7 @@ const RatingsPage = () => {
 
   const fetchDriverRatings = async () => {
     try {
-      const response = await axios.get<Driver>(`/api/driver/ratings`);
+      const response = await axios.get<Driver>(`/api/ratings`);
       setDriver(response.data);
     } catch (error) {
       console.error('Error fetching driver ratings:', error);
@@ -63,18 +61,18 @@ const RatingsPage = () => {
         </div>
       )}
       {driver?.ratings && driver.ratings.length > 0 ? (
-        <table className="min-w-full bg-white border">
-          <thead>
+        <table className="min-w-full bg-white border border-gray-200">
+          <thead className="bg-gray-100">
             <tr>
-              <th className="py-2 px-4 border-b">Rating</th>
-              <th className="py-2 px-4 border-b">Comment</th>
+              <th className="py-2 px-4 border-r border-gray-200">Rating</th>
+              <th className="py-2 px-4">Comment</th>
             </tr>
           </thead>
           <tbody>
             {driver.ratings.map((rating) => (
-              <tr key={rating.id}>
-                <td className="py-2 px-4 border-b">{rating.value}</td>
-                <td className="py-2 px-4 border-b">{rating.comment || 'No comment'}</td>
+              <tr key={rating.id} className="border-b border-gray-200">
+                <td className="py-2 px-4 border-r border-gray-200 text-center">{rating.value}</td>
+                <td className="py-2 px-4">{rating.comment || 'No comment'}</td>
               </tr>
             ))}
           </tbody>

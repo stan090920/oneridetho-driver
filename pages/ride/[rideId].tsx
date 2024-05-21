@@ -291,7 +291,7 @@ const RidePage = () => {
   };
 
   useEffect(() => {
-    const fetchRideDetails = async () => {
+    const fetchRideDetails = async (retryCount = 3, delay = 1000) => {
       if (typeof rideId === "string") {
         setIsLoading(true);
         try {
@@ -307,8 +307,13 @@ const RidePage = () => {
             setPickupLocation(coordinates);
           }
         } catch (error) {
-          console.error("Error fetching ride details:", error);
-          setError("Failed to load ride details.");
+          if (retryCount > 0) {
+            console.warn(`Retrying... ${retryCount} attempts left.`);
+            setTimeout(() => fetchRideDetails(retryCount - 1, delay), delay);
+          } else {
+            console.error("Error fetching ride details:", error);
+            setError("Failed to load ride details.");
+          }
         } finally {
           setIsLoading(false);
         }
