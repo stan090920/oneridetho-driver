@@ -41,6 +41,7 @@ const defaultCenter = {
   lng: -77.345,
 };
 
+
 const Dashboard = () => {
   const [rides, setRides] = useState<Ride[]>([]);
   const [isLoading, setIsLoading] = useState(false);
