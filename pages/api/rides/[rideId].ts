@@ -45,7 +45,7 @@ export default async function handler(
           to: updatedRide.user.phone,
         });
       } else if (status === 'Completed' && updatedRide.user && updatedRide.user.phone) {
-        const ratingLink = `https://oneridetho-ten.vercel.app/ride/${rideIdNumber}`;
+        const ratingLink = `https://oneridetho-ten.vercel.app/rides/${rideIdNumber}`;
         await twilioClient.messages.create({
           body: `Thank you or riding with us. Please rate your driver here: ${ratingLink}`,
           from: process.env.TWILIO_PHONE_NUMBER,
