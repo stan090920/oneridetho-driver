@@ -153,10 +153,11 @@ const Task = () => {
     return rides.length > 0 ? (
       rides.map((ride) => {
         const canAccept = !ride.scheduledPickupTime || isTimeToAccept(ride.scheduledPickupTime);
+        const rideLink = ride.status === "InProgress" ? `/ride/${ride.id}` : `/dashboard?rideId=${ride.id}`;
         return (
           <li key={ride.id} className={`border-2 py-2 pl-2 pr-2 mt-2 rounded-md ${!canAccept && 'opacity-70 cursor-not-allowed'}`}>
             {canAccept ? (
-              <Link href={`/dashboard?rideId=${ride.id}`}>
+              <Link href={rideLink}>
                   <strong>Ride ID:</strong> {ride.id}
                   <div>
                     <strong>Status:</strong> {ride.status}
