@@ -10,6 +10,7 @@ import {
 } from "@react-google-maps/api";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
+import { Spinner } from "@/components/Spinner";
 
 const mapContainerStyle = {
   width: "100%",
@@ -77,6 +78,7 @@ const RidePage = () => {
   const { rideId } = router.query;
   const [rideDetails, setRideDetails] = useState<Ride | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCompletingRide, setIsCompletingRide] = useState(false);
   const [error, setError] = useState("");
   const [directions, setDirections] = useState(null);
   const [driverLocation, setDriverLocation] = useState({ lat: 0, lng: 0 });
@@ -266,6 +268,9 @@ const RidePage = () => {
         if (dropoffCoordinates) {
           setDropoffLocation(dropoffCoordinates);
         }
+
+        // Start the timer
+        setTimerActive(true);
       } catch (error) {
         console.error("Error updating ride status:", error);
       }
@@ -276,6 +281,8 @@ const RidePage = () => {
   const handleRideComplete = async () => {
     if (rideDetails) {
       try {
+        setIsCompletingRide(true);
+
         await axios.patch(`/api/rides/${rideId}`, {
           status: "Completed",
           dropoffTime: new Date(),
@@ -286,6 +293,8 @@ const RidePage = () => {
       } catch (error) {
         console.error("Error completing the ride:", error);
         alert("Failed to complete the ride.");
+      } finally {
+        setIsCompletingRide(false);
       }
     }
   };
@@ -351,7 +360,7 @@ const RidePage = () => {
       );
     };
 
-    const intervalId = setInterval(updateDirections, 3000); // Update directions every 3 seconds
+    const intervalId = setInterval(updateDirections, 1000); // Update directions every second
     return () => clearInterval(intervalId);
   }, [driverLocation, pickupLocation, dropoffLocation, isPickedUp]);
 
@@ -502,8 +511,9 @@ const RidePage = () => {
                 <button
                   onClick={handleRideComplete}
                   className="px-4 py-2 bg-black text-white rounded-md mr-4"
+                  disabled={isCompletingRide}
                 >
-                  Complete Ride
+                  {isCompletingRide ? (<Spinner />) : ("Complete Ride")}
                 </button>
               )}
 

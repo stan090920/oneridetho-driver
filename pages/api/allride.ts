@@ -17,6 +17,11 @@ export default async function handler(
           dropoffLocation: true,
           scheduledPickupTime: true,
           fare: true,
+          user: {
+            select: {
+              name: true,
+            },
+          },
         }
       });
       res.status(200).json(rides);

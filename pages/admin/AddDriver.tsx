@@ -37,13 +37,28 @@ const AddDriver = () => {
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
-      setPhoto(file);
-      setPhotoUploading(true);
-      const url = await handleFileUpload(file);
-      if (url) {
-        setPhotoUrl(url);
-      }
-      setPhotoUploading(false);
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const img = document.createElement('img');
+        img.src = event.target?.result as string;
+        img.onload = async () => {
+          const canvas = cropImageToSquare(img);
+          if (canvas) {
+            canvas.toBlob(async (blob) => {
+              if (blob) {
+                const squareFile = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+                setPhotoUploading(true);
+                const url = await handleFileUpload(squareFile);
+                if (url) {
+                  setPhotoUrl(url);
+                }
+                setPhotoUploading(false);
+              }
+            }, 'image/jpeg');
+          }
+        };
+      };
+      reader.readAsDataURL(file);
     } else {
       alert('Please select a valid image file for the photo.');
       setPhoto(null);
@@ -64,6 +79,31 @@ const AddDriver = () => {
       alert('Please select a valid image file for the car image.');
       setCarImage(null);
     }
+  };
+
+
+  const cropImageToSquare = (img: HTMLImageElement) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const size = Math.min(img.width, img.height);
+
+    if (ctx) {
+      canvas.width = size;
+      canvas.height = size;
+      ctx.drawImage(
+        img,
+        (img.width - size) / 2,
+        (img.height - size) / 2,
+        size,
+        size,
+        0,
+        0,
+        size,
+        size
+      );
+      return canvas;
+    }
+    return null;
   };
 
   const handleFileUpload = async (file: File) => {

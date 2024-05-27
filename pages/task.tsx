@@ -11,6 +11,9 @@ type Ride = {
   dropoffLocation: any;
   scheduledPickupTime?: string;
   fare?: number;
+  user?: {
+    name: string;
+  };
 };
 
 interface DailyEarning {
@@ -140,41 +143,78 @@ const Task = () => {
 
   const paymentToOneRideTho = totalEarnings ? totalEarnings * 0.3 : 0;
 
+  const isTimeToAccept = (scheduledTime: string): boolean => {
+    const currentTime = new Date();
+    const scheduledPickupTime = new Date(scheduledTime);
+    return currentTime >= scheduledPickupTime;
+  };
+
   const renderRides = (rides: Ride[]) => {
     return rides.length > 0 ? (
-     rides.map((ride) => (
-      <Link href={`/dashboard?rideId=${ride.id}`} key={ride.id}>
-        <li className="border-2 py-2 pl-2 pr-2 mt-2 rounded-md">
-          <strong>Ride ID:</strong> {ride.id}
-          <div>
-            <strong>Status:</strong> {ride.status}
-          </div>
-          <div>
-            <strong>Pickup Location:</strong>{" "}
-            {JSON.stringify(ride.pickupLocation)}
-          </div>
-          <div>
-            <strong>Dropoff Location:</strong>{" "}
-            {JSON.stringify(ride.dropoffLocation)}
-          </div>
-          {ride.scheduledPickupTime && (
-            <div>
-              <strong>Scheduled Pickup Time:</strong>{" "}
-              {formatDate(ride.scheduledPickupTime)}
-            </div>
-          )}
-          {ride.fare && (
-            <div>
-              <strong>Fare:</strong> ${ride.fare.toFixed(2)}
-            </div>
-          )}
-        </li>
-      </Link>
-     ))
-     ) : (
-       renderNoRidesMessage()
-     );
-   
+      rides.map((ride) => {
+        const canAccept = !ride.scheduledPickupTime || isTimeToAccept(ride.scheduledPickupTime);
+        return (
+          <li key={ride.id} className={`border-2 py-2 pl-2 pr-2 mt-2 rounded-md ${!canAccept && 'opacity-70 cursor-not-allowed'}`}>
+            {canAccept ? (
+              <Link href={`/dashboard?rideId=${ride.id}`}>
+                  <strong>Ride ID:</strong> {ride.id}
+                  <div>
+                    <strong>Status:</strong> {ride.status}
+                  </div>
+                  <div>
+                    <strong>Customer Name:</strong> {ride.user?.name}
+                  </div>
+                  <div>
+                    <strong>Pickup Location:</strong> {JSON.stringify(ride.pickupLocation)}
+                  </div>
+                  <div>
+                    <strong>Dropoff Location:</strong> {JSON.stringify(ride.dropoffLocation)}
+                  </div>
+                  {ride.scheduledPickupTime && (
+                    <div>
+                      <strong>Scheduled Pickup Time:</strong> {formatDate(ride.scheduledPickupTime)}
+                    </div>
+                  )}
+                  {ride.fare && (
+                    <div>
+                      <strong>Fare:</strong> ${ride.fare.toFixed(2)}
+                    </div>
+                  )}
+              </Link>
+            ) : (
+              <>
+                <strong>Ride ID:</strong> {ride.id}
+                <div>
+                  <strong>Status:</strong> {ride.status}
+                </div>
+                <div>
+                  <strong>Customer Name:</strong> {ride.user?.name}
+                </div>
+                <div>
+                  <strong>Pickup Location:</strong> {JSON.stringify(ride.pickupLocation)}
+                </div>
+                <div>
+                  <strong>Dropoff Location:</strong> {JSON.stringify(ride.dropoffLocation)}
+                </div>
+                {ride.scheduledPickupTime && (
+                  <div>
+                    <strong>Scheduled Pickup Time:</strong> {formatDate(ride.scheduledPickupTime)}
+                  </div>
+                )}
+                {ride.fare && (
+                  <div>
+                    <strong>Fare:</strong> ${ride.fare.toFixed(2)}
+                  </div>
+                )}
+                <div className="text-red-500">Cannot accept this ride yet.</div>
+              </>
+            )}
+          </li>
+        );
+      })
+    ) : (
+      renderNoRidesMessage()
+    );
   };
 
 
