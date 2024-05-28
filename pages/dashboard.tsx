@@ -102,8 +102,8 @@ const Dashboard = () => {
     // Check if the ride has already been accepted
     const acceptedRides = JSON.parse(localStorage.getItem('acceptedRides') || '[]');
     if (acceptedRides.includes(rideId)) {
-      alert('This ride has already been accepted.');
-      return;
+      console.log("Ride already accepted!");
+      router.push(`/ride/${rideId}`);
     }
 
     setLoadingRideId(rideId);

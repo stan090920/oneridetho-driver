@@ -79,6 +79,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           phone,
           photoUrl,
           carImageUrl,
+          rating: 0,
+          numberOfRatings: 0,
         },
       });
 

@@ -20,6 +20,7 @@ export default async function handler(
           user: {
             select: {
               name: true,
+              phone: true,
             },
           },
         }

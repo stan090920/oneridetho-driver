@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
+import withAdminAuth from '../../hoc/withAdminAuth';
 
 interface Driver {
   id: number;
@@ -174,110 +175,119 @@ const AddDriver = () => {
   const isSubmitDisabled = photoUploading || carImageUploading || !photoUrl || !carImageUrl;
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100 py-8">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-lg h-full max-h-[calc(100vh-4rem)] overflow-auto">
-        <h1 className="text-3xl mb-6 text-center">Add Driver</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block mb-2 font-semibold">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label className="block mb-2 font-semibold">Photo</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-            {photoUploading && <p>Uploading photo...</p>}
-          </div>
-          <div>
-            <label className="block mb-2 font-semibold">Car Type</label>
-            <input
-              type="text"
-              value={carType}
-              onChange={(e) => setCarType(e.target.value)}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label className="block mb-2 font-semibold">License Plate</label>
-            <input
-              type="text"
-              value={licensePlate}
-              onChange={(e) => setLicensePlate(e.target.value)}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label className="block mb-2 font-semibold">Car Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleCarImageChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-            {carImageUploading && <p>Uploading car image...</p>}
-          </div>
-          <div>
-            <label className="block mb-2 font-semibold">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label className="block mb-2 font-semibold">Phone</label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div>
-            <label className="block mb-2 font-semibold">Password</label>
-            <div className="flex items-center">
+    <div className='relative'>
+      <header className="bg-white border-b border-black text-black flex justify-between items-center p-4">
+        <button onClick={() => router.back()} className="p-2 bg-gray-200 rounded">Back</button>
+        <h1 className="text-xl font-bold">Add Driver</h1>
+      </header>
+
+      <div className="flex justify-center items-center min-h-[75vh] bg-gray-100 py-3">
+        <div className="bg-white px-8 rounded shadow-md w-full max-w-lg h-full max-h-[calc(100vh-4rem)] overflow-auto">
+          <h1 className="text-3xl mb-6 text-center">Add Driver</h1>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block mb-2 font-semibold">Name</label>
               <input
                 type="text"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="w-full p-2 border rounded"
                 required
               />
-              <button type="button" onClick={generatePassword} className="ml-2 p-2 bg-gray-200 rounded">
-                Generate
-              </button>
             </div>
-          </div>
-          <button
-            type="submit"
-            className="w-full p-2 bg-blue-500 text-white rounded"
-            disabled={isSubmitDisabled}
-          >
-            {isLoading ? 'Adding Driver...' : 'Add Driver'}
-          </button>
-          <div>
-            <br/>
-          </div>
-        </form>
+            <div>
+              <label className="block mb-2 font-semibold">Photo</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="w-full p-2 border rounded"
+                required
+              />
+              {photoUploading && <p>Uploading photo...</p>}
+            </div>
+            <div>
+              <label className="block mb-2 font-semibold">Car Type</label>
+              <input
+                type="text"
+                value={carType}
+                onChange={(e) => setCarType(e.target.value)}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-2 font-semibold">License Plate</label>
+              <input
+                type="text"
+                value={licensePlate}
+                onChange={(e) => setLicensePlate(e.target.value)}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-2 font-semibold">Car Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleCarImageChange}
+                className="w-full p-2 border rounded"
+                required
+              />
+              {carImageUploading && <p>Uploading car image...</p>}
+            </div>
+            <div>
+              <label className="block mb-2 font-semibold">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <div>
+              <label className="block mb-2 font-semibold">Phone</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block mb-2 font-semibold">Password</label>
+              <div className="flex items-center">
+                <input
+                  type="text"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+                <button type="button" onClick={generatePassword} className="ml-2 p-2 bg-gray-200 rounded">
+                  Generate
+                </button>
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="w-full p-2 bg-blue-500 text-white rounded"
+              disabled={isSubmitDisabled}
+            >
+              {isLoading ? 'Adding Driver...' : 'Add Driver'}
+            </button>
+            <div>
+              <br/>
+              <br/>
+              <br/>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
 };
 
-export default AddDriver;
+export default withAdminAuth(AddDriver);
