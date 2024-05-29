@@ -14,31 +14,11 @@ export default async function handler(
   if (req.method === 'POST') {
     const { address } = req.body;
     try {
-      // Sanitize input address
-      const encodedAddress = encodeURIComponent(address);
-      
-      // Make geocoding API request
-      const response = await axios.get(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${process.env.API_KEY}`
-      );
-
-      // Check if response contains expected data structure
-      if (
-        response?.data?.results?.[0]?.geometry?.location
-      ) {
-        const { lat, lng } = response.data.results[0].geometry.location;
-        res.status(200).json({ lat, lng });
-      } else {
-        res.status(500).json({ error: 'Invalid geocoding response' });
-      }
+      const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.API_KEY}`);
+      const { lat, lng } = response.data.results[0].geometry.location;
+      res.status(200).json({ lat, lng });
     } catch (error) {
-      // Handle specific errors and provide more detailed error message
-      let errorMessage = 'Error in geocoding';
-      if ((error as any)?.response?.status) {
-        errorMessage += ` - Status: ${(error as any).response.status}`;
-      }
-      console.error(errorMessage, error);
-      res.status(500).json({ error: errorMessage });
+      res.status(500).json({ error: 'Error in geocoding' });
     }
   } else {
     res.setHeader('Allow', ['POST']);
