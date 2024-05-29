@@ -384,11 +384,30 @@ const RidePage = () => {
         waypoints = stops.map(stop => `${stop.lat},${stop.lng}`).join('|');
       }
   
-      const pickupCoords = rideDetails.pickupLocation;
       const dropoffCoords = `${rideDetails.dropoffLocation},${rideDetails.dropoffLocation}`;
-      const url = `${baseMapsUrl}&origin=${pickupCoords}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
-  
-      window.open(url, "_blank");
+
+      // Use the Geolocation API to get the current position of the device
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const originCoords = `${position.coords.latitude},${position.coords.longitude}`;
+            const url = `${baseMapsUrl}&origin=${originCoords}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
+            window.open(url, "_blank");
+          },
+          (error) => {
+            console.error("Error getting geolocation:", error);
+            // Fallback to pickup location if geolocation fails
+            const pickupCoords = rideDetails.pickupLocation;
+            const url = `${baseMapsUrl}&origin=${pickupCoords}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
+            window.open(url, "_blank");
+          }
+        );
+      } else {
+        // Fallback to pickup location if geolocation is not supported
+        const pickupCoords = rideDetails.pickupLocation;
+        const url = `${baseMapsUrl}&origin=${pickupCoords}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
+        window.open(url, "_blank");
+      }
     }
   };
 
