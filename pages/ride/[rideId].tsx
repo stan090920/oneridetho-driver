@@ -392,7 +392,7 @@ const RidePage = () => {
         }
 
         const dropoffCoords = `${rideDetails.dropoffLocation.lat},${rideDetails.dropoffLocation.lng}`;
-        const url = `${baseMapsUrl}&origin=My+Location&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
+        const url = `${baseMapsUrl}&origin=current+location&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
 
         window.open(url, "_blank");
       } catch (error) {
