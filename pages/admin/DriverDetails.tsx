@@ -75,7 +75,8 @@ const DriverDetails = () => {
     }
   };
 
-  const paymentToOneRideTho = earnings ? earnings.total * 0.3 : 0;
+  const totalEarnings = earnings ? earnings.total / 0.7 : 0;
+  const paymentToOneRideTho = totalEarnings * 0.3;
 
   const handleResetRatings = async () => {
     try {
