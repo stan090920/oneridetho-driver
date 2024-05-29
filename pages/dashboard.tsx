@@ -104,6 +104,7 @@ const Dashboard = () => {
     if (acceptedRides.includes(rideId)) {
       console.log("Ride already accepted!");
       router.push(`/ride/${rideId}`);
+      return;
     }
 
     setLoadingRideId(rideId);
@@ -123,6 +124,15 @@ const Dashboard = () => {
         throw new Error(`Error: ${response.status}`);
       }
       const rideData = await response.json();
+
+      // Check ride status
+      const invalidStatuses = ['Completed', 'Cancelled', 'InProgress'];
+      if (invalidStatuses.includes(rideData.status)) {
+        alert(`You cannot accept a ride that is ${rideData.status}.`);
+        setIsLoading(false);
+        setLoadingRideId(null);
+        return;
+      }
 
       // Fetch in-progress rides to check for scheduling conflicts
       const inProgressResponse = await fetch('/api/rides/inprogress');
