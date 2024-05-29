@@ -378,8 +378,6 @@ const RidePage = () => {
           stops = Array.isArray(rideDetails.stops) ? rideDetails.stops : JSON.parse(rideDetails.stops);
         } catch (error) {
           console.error("Error parsing stops:", error);
-        }finally {
-          setIsOpeningMaps(false);
         }
       }
 
@@ -402,6 +400,8 @@ const RidePage = () => {
       } catch (error) {
         console.error("Error fetching pickup coordinates:", error);
         alert("Failed to get pickup location coordinates.");
+      } finally {
+        setIsOpeningMaps(false);
       }
     }
   };
