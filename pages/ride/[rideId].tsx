@@ -365,7 +365,7 @@ const RidePage = () => {
   }, [driverLocation, pickupLocation, dropoffLocation, isPickedUp]);
 
   
-  const openInMaps = () => {
+  const openInMaps = async () => {
     if (rideDetails && rideDetails.pickupLocation && rideDetails.dropoffLocation) {
       const baseMapsUrl = 'https://www.google.com/maps/dir/?api=1';
       let waypoints = '';
@@ -378,16 +378,27 @@ const RidePage = () => {
           console.error("Error parsing stops:", error);
         }
       }
-  
-      if (stops.length > 0) {
-        //@ts-ignore
-        waypoints = stops.map(stop => `${stop.lat},${stop.lng}`).join('|');
+
+      try {
+        // Fetch pickup coordinates
+        const pickupCoords = await fetchCoordinates(rideDetails.pickupLocation);
+        if (pickupCoords) {
+          // Add pickup location coordinates as the first stop point
+          stops.unshift(pickupCoords);
+        }
+
+        if (stops.length > 0) {
+          waypoints = stops.map((stop: { lat: string, lng: string }) => `${stop.lat},${stop.lng}`).join('|');
+        }
+
+        const dropoffCoords = `${rideDetails.dropoffLocation.lat},${rideDetails.dropoffLocation.lng}`;
+        const url = `${baseMapsUrl}&origin=My+Location&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
+
+        window.open(url, "_blank");
+      } catch (error) {
+        console.error("Error fetching pickup coordinates:", error);
+        alert("Failed to get pickup location coordinates.");
       }
-  
-      const dropoffCoords = `${rideDetails.dropoffLocation},${rideDetails.dropoffLocation}`;
-      const url = `${baseMapsUrl}&origin=current+location&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
-  
-      window.open(url, "_blank");
     }
   };
 
