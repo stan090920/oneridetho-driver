@@ -384,7 +384,7 @@ const RidePage = () => {
         waypoints = stops.map(stop => `${stop.lat},${stop.lng}`).join('|');
       }
   
-      const pickupCoords = `${rideDetails.pickupLocation},${rideDetails.pickupLocation}`;
+      const pickupCoords = rideDetails.pickupLocation;
       const dropoffCoords = `${rideDetails.dropoffLocation},${rideDetails.dropoffLocation}`;
       const url = `${baseMapsUrl}&origin=${pickupCoords}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
   
