@@ -20,6 +20,7 @@ interface DriverStats {
 
 interface EarningsStats {
   totalEarnings: number;
+  oneRideThoPayment: number;  // Add this field
   earningsByDriver: { driverId: number; driverName: string; amount: number }[];
   earningsTrends: { date: string; earnings: number }[];
 }
@@ -103,6 +104,7 @@ const Dashboard = () => {
         <div className="p-4 bg-white shadow rounded-lg">
           <h3 className="font-semibold mb-2">Earnings</h3>
           <p>Total Earnings: ${earningsStats.totalEarnings.toFixed(2)}</p>
+          <p>OneRideTho Payment: ${earningsStats.oneRideThoPayment.toFixed(2)}</p> {/* Add this line */}
           <h4 className="font-semibold mt-2">Earnings by Driver</h4>
           <ul>
             {earningsStats?.earningsByDriver.map(earning => (

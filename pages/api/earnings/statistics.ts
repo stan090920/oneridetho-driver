@@ -24,6 +24,9 @@ export default async function handler(
       });
       const totalEarnings = totalEarningsResult._sum.fare ?? 0;
 
+      // Calculate OneRideTho's payment
+      const oneRideThoPayment = totalEarnings * 0.30;
+
       // Earnings by driver
       const earningsByDriver: EarningsByDriver[] = await prisma.ride.groupBy({
         by: ['driverId'],
@@ -67,6 +70,7 @@ export default async function handler(
 
       res.status(200).json({
         totalEarnings,
+        oneRideThoPayment,  // Include the calculated payment
         earningsByDriver: earningsWithDriverNames,
         earningsTrends,
       });
