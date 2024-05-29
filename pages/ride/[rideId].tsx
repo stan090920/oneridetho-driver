@@ -385,29 +385,9 @@ const RidePage = () => {
       }
   
       const dropoffCoords = `${rideDetails.dropoffLocation},${rideDetails.dropoffLocation}`;
-
-      // Use the Geolocation API to get the current position of the device
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const originCoords = `${position.coords.latitude},${position.coords.longitude}`;
-            const url = `${baseMapsUrl}&origin=${originCoords}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
-            window.open(url, "_blank");
-          },
-          (error) => {
-            console.error("Error getting geolocation:", error);
-            // Fallback to pickup location if geolocation fails
-            const pickupCoords = rideDetails.pickupLocation;
-            const url = `${baseMapsUrl}&origin=${pickupCoords}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
-            window.open(url, "_blank");
-          }
-        );
-      } else {
-        // Fallback to pickup location if geolocation is not supported
-        const pickupCoords = rideDetails.pickupLocation;
-        const url = `${baseMapsUrl}&origin=${pickupCoords}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
-        window.open(url, "_blank");
-      }
+      const url = `${baseMapsUrl}&origin=current+location&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
+  
+      window.open(url, "_blank");
     }
   };
 
