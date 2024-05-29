@@ -118,6 +118,7 @@ const RidePage = () => {
   const [timerActive, setTimerActive] = useState(false);
   const [extraCharges, setExtraCharges] = useState(0);
   const [initialPeriodPassed, setInitialPeriodPassed] = useState(false);
+  const [isOpeningMaps, setIsOpeningMaps] = useState(false);
 
 
   useEffect(() => {
@@ -367,6 +368,7 @@ const RidePage = () => {
   
   const openInMaps = async () => {
     if (rideDetails && rideDetails.pickupLocation && rideDetails.dropoffLocation) {
+      setIsOpeningMaps(true);
       const baseMapsUrl = 'https://www.google.com/maps/dir/?api=1';
       let waypoints = '';
   
@@ -376,6 +378,8 @@ const RidePage = () => {
           stops = Array.isArray(rideDetails.stops) ? rideDetails.stops : JSON.parse(rideDetails.stops);
         } catch (error) {
           console.error("Error parsing stops:", error);
+        }finally {
+          setIsOpeningMaps(false);
         }
       }
 
@@ -531,7 +535,7 @@ const RidePage = () => {
                 onClick={openInMaps}
                 className="px-4 py-2 bg-black text-white rounded-md"
               >
-                Open in Maps
+                {isOpeningMaps ? <Spinner /> : "Open in Maps"}
               </button>
             </div>
           </div>
