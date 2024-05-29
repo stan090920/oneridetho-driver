@@ -14,7 +14,6 @@ interface RideStats {
 
 interface DriverStats {
   totalDrivers: number;
-  activeDrivers: number;
   averageRating: number;
   topPerformingDrivers: { id: number; name: string; completedRides: number }[];
 }
@@ -91,7 +90,6 @@ const Dashboard = () => {
         <div className="p-4 bg-white shadow rounded-lg">
           <h3 className="font-semibold mb-2">Driver Performance</h3>
           <p>Total Drivers: {driverStats.totalDrivers}</p>
-          <p>Active Drivers: {driverStats.activeDrivers}</p>
           <p>Average Rating: {driverStats.averageRating}</p>
           <h4 className="font-semibold mt-2">Top Performing Drivers</h4>
           <ul>
