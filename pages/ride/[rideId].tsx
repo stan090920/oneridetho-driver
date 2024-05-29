@@ -11,6 +11,7 @@ import {
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { Spinner } from "@/components/Spinner";
+import { debug } from "console";
 
 const mapContainerStyle = {
   width: "100%",
@@ -381,11 +382,14 @@ const RidePage = () => {
         }
       }
 
+      if (stops.length > 0) {
+        waypoints = stops.map((stop: { lat: string, lng: string }) => `${stop.lat},${stop.lng}`).join('|');
+      }
+
       try {
         // Fetch pickup coordinates
         const pickupCoords = await fetchCoordinates(rideDetails.pickupLocation);
         if (pickupCoords) {
-          // Add pickup location coordinates as the first stop point
           stops.unshift(pickupCoords);
         }
 
@@ -393,7 +397,9 @@ const RidePage = () => {
           waypoints = stops.map((stop: { lat: string, lng: string }) => `${stop.lat},${stop.lng}`).join('|');
         }
 
-        const dropoffCoords = `${rideDetails.dropoffLocation.lat},${rideDetails.dropoffLocation.lng}`;
+        const dropoffCoords = rideDetails.dropoffLocation;
+
+
         const url = `${baseMapsUrl}&origin=current+location&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
 
         window.open(url, "_blank");
@@ -406,9 +412,6 @@ const RidePage = () => {
     }
   };
 
-
-  
-  
 
   const [manualDriverLat, setManualDriverLat] = useState("");
   const [manualDriverLng, setManualDriverLng] = useState("");
