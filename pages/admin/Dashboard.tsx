@@ -7,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } f
 interface RideStats {
   totalRides: number;
   activeRides: number;
+  requestedRides: number;
   scheduledRides: number;
   completedRides: number;
   cancelledRides: number;
@@ -20,7 +21,7 @@ interface DriverStats {
 
 interface EarningsStats {
   totalEarnings: number;
-  oneRideThoPayment: number;  // Add this field
+  oneRideThoPayment: number;
   earningsByDriver: { driverId: number; driverName: string; amount: number }[];
   earningsTrends: { date: string; earnings: number }[];
 }
@@ -82,6 +83,7 @@ const Dashboard = () => {
           <h3 className="font-semibold mb-2">Ride Statistics</h3>
           <p>Total Rides: {rideStats.totalRides}</p>
           <p>Active Rides: {rideStats.activeRides}</p>
+          <p>Requested Rides: {rideStats.requestedRides}</p>
           <p>Scheduled Rides: {rideStats.scheduledRides}</p>
           <p>Completed Rides: {rideStats.completedRides}</p>
           <p>Cancelled Rides: {rideStats.cancelledRides}</p>

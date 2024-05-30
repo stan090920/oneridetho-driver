@@ -102,6 +102,21 @@ const RidePage = () => {
       router.push("/");
     }
   }, [session, status, router]);
+
+  useEffect(() => {
+    if (rideId) {
+      const storedIsPickedUp = localStorage.getItem(`isPickedUp_${rideId}`);
+      if (storedIsPickedUp !== null) {
+        setIsPickedUp(JSON.parse(storedIsPickedUp));
+      }
+    }
+  }, [rideId]);
+
+  useEffect(() => {
+    if (rideId) {
+      localStorage.setItem(`isPickedUp_${rideId}`, JSON.stringify(isPickedUp));
+    }
+  }, [isPickedUp, rideId]);
   
   useEffect(() => {
     if (swrRideDetails?.status === "Cancelled") {
@@ -291,6 +306,9 @@ const RidePage = () => {
         });
         alert("Ride completed successfully!");
 
+        // Clear isPickedUp from localStorage
+        localStorage.removeItem(`isPickedUp_${rideId}`);
+
         router.push("/dashboard");
       } catch (error) {
         console.error("Error completing the ride:", error);
@@ -362,7 +380,7 @@ const RidePage = () => {
       );
     };
 
-    const intervalId = setInterval(updateDirections, 1000); // Update directions every second
+    const intervalId = setInterval(updateDirections, 0); // Update directions every frame
     return () => clearInterval(intervalId);
   }, [driverLocation, pickupLocation, dropoffLocation, isPickedUp]);
 

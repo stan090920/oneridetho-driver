@@ -13,10 +13,13 @@ interface EarningsByDriver {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     try {
-      // Total earnings
+      // Total earnings for completed rides
       const totalEarningsResult = await prisma.ride.aggregate({
         _sum: {
           fare: true,
+        },
+        where: {
+          status: 'Completed',
         },
       });
       const totalEarnings = totalEarningsResult._sum.fare ?? 0;
@@ -24,11 +27,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Calculate OneRideTho's payment
       const oneRideThoPayment = totalEarnings * 0.30;
 
-      // Earnings by driver
+      // Earnings by driver for completed rides
       const earningsByDriver: EarningsByDriver[] = await prisma.ride.groupBy({
         by: ['driverId'],
         _sum: {
           fare: true,
+        },
+        where: {
+          status: 'Completed',
         },
       }) as unknown as EarningsByDriver[];
 
@@ -44,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
-      // Map driver names to the earningsByDriver results
+      // Map driver names to the earningsByDriver results and sort by earnings in descending order
       const earningsWithDriverNames = earningsByDriver.map((item) => {
         const driver = drivers.find((driver) => driver.id === item.driverId);
         return {
@@ -52,13 +58,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           driverName: driver ? driver.name : 'Unknown',
           amount: item._sum.fare ?? 0, // Ensure a default value of 0 if fare is null
         };
-      });
+      }).sort((a, b) => b.amount - a.amount);
 
-      // Earnings trends over time
+      // Earnings trends over time for completed rides
       const earningsTrendsRaw = await prisma.ride.groupBy({
         by: ['pickupTime'],
         _sum: {
           fare: true,
+        },
+        where: {
+          status: 'Completed',
         },
         orderBy: {
           pickupTime: 'asc',

@@ -13,6 +13,9 @@ export default async function handler(
       const activeRides = await prisma.ride.count({
         where: { status: 'InProgress' }
       });
+      const requestedRides = await prisma.ride.count({
+        where: { status: 'Requested' }
+      });
       const scheduledRides = await prisma.ride.count({
         where: { status: 'Scheduled' }
       });
@@ -23,7 +26,7 @@ export default async function handler(
         where: { status: 'Cancelled' }
       });
 
-      res.status(200).json({ totalRides, activeRides, scheduledRides, completedRides, cancelledRides });
+      res.status(200).json({ totalRides, requestedRides, activeRides, scheduledRides, completedRides, cancelledRides });
     } catch (error) {
       console.error('Error fetching ride statistics:', error);
       res.status(500).json({ message: 'Error fetching ride statistics' });
