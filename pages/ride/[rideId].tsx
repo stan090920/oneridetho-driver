@@ -400,7 +400,7 @@ const RidePage = () => {
         const dropoffCoords = rideDetails.dropoffLocation;
 
 
-        const url = `${baseMapsUrl}&origin=current+location&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}`;
+        const url = `${baseMapsUrl}&origin=Current+Location&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
 
         window.open(url, "_blank");
       } catch (error) {
