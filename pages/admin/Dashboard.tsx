@@ -118,7 +118,7 @@ const Dashboard = () => {
         {/* Cancellations */}
         <div className="p-4 bg-white shadow rounded-lg">
           <h3 className="font-semibold mb-2">Cancellations</h3>
-          <p>Cancellation Rate: {cancellationStats.cancellationRate}%</p>
+          <p>Cancellation Rate: {cancellationStats.cancellationRate.toFixed(2)}%</p>
         </div>
 
         {/* User Activity */}
