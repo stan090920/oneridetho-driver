@@ -10,10 +10,7 @@ interface EarningsByDriver {
   };
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     try {
       // Total earnings
@@ -58,7 +55,7 @@ export default async function handler(
       });
 
       // Earnings trends over time
-      const earningsTrends = await prisma.ride.groupBy({
+      const earningsTrendsRaw = await prisma.ride.groupBy({
         by: ['pickupTime'],
         _sum: {
           fare: true,
@@ -68,9 +65,15 @@ export default async function handler(
         },
       });
 
+      // Transform the earningsTrends data to match the required format
+      const earningsTrends = earningsTrendsRaw.map(item => ({
+        date: item.pickupTime.toISOString().split('T')[0], // Format date as YYYY-MM-DD
+        earnings: item._sum.fare ?? 0,
+      }));
+
       res.status(200).json({
         totalEarnings,
-        oneRideThoPayment,  // Include the calculated payment
+        oneRideThoPayment,
         earningsByDriver: earningsWithDriverNames,
         earningsTrends,
       });
