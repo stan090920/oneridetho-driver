@@ -385,33 +385,14 @@ const RidePage = () => {
       if (stops.length > 0) {
         waypoints = stops.map((stop: { lat: string, lng: string }) => `${stop.lat},${stop.lng}`).join('|');
       }
+      const pickupCoords = rideDetails.pickupLocation;
+      const dropoffCoords = rideDetails.dropoffLocation;
 
-      try {
-        // Fetch pickup coordinates
-        const pickupCoords = await fetchCoordinates(rideDetails.pickupLocation);
-        if (pickupCoords) {
-          stops.unshift(pickupCoords);
-        }
+      const url = `${baseMapsUrl}&origin=${pickupCoords}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
 
-        if (stops.length > 0) {
-          waypoints = stops.map((stop: { lat: string, lng: string }) => `${stop.lat},${stop.lng}`).join('|');
-        }
+      window.open(url, "_blank");
 
-        
-        const dropoffCoords = rideDetails.dropoffLocation;
-
-        console.log("Waypoints: ", waypoints);
-        console.log("Dropoff: ", dropoffCoords);
-
-        const url = `${baseMapsUrl}&origin=Current+Location&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
-
-        window.open(url, "_blank");
-      } catch (error) {
-        console.error("Error fetching pickup coordinates:", error);
-        alert("Failed to get pickup location coordinates.");
-      } finally {
-        setIsOpeningMaps(false);
-      }
+      setIsOpeningMaps(false);
     }
   };
 
