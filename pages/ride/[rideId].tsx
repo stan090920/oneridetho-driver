@@ -388,19 +388,19 @@ const RidePage = () => {
 
       try {
         // Fetch pickup coordinates
-        const pickupCoords = await fetchCoordinates(rideDetails.pickupLocation);
-        if (pickupCoords) {
-          stops.unshift(pickupCoords);
-        }
+        // const pickupCoords = await fetchCoordinates(rideDetails.pickupLocation);
+        // if (pickupCoords) {
+        //   stops.unshift(pickupCoords);
+        // }
 
         if (stops.length > 0) {
           waypoints = stops.map((stop: { lat: string, lng: string }) => `${stop.lat},${stop.lng}`).join('|');
         }
 
+        const pickupCoords = rideDetails.pickupLocation;
         const dropoffCoords = rideDetails.dropoffLocation;
 
-
-        const url = `${baseMapsUrl}&origin=Current+Location&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
+        const url = `${baseMapsUrl}&origin=${pickupCoords}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
 
         window.open(url, "_blank");
       } catch (error) {
