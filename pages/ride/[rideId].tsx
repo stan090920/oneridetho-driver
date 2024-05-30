@@ -372,7 +372,7 @@ const RidePage = () => {
       setIsOpeningMaps(true);
       const baseMapsUrl = 'https://www.google.com/maps/dir/?api=1';
       let waypoints = '';
-  
+      
       let stops = [];
       if (rideDetails.stops) {
         try {
@@ -382,21 +382,31 @@ const RidePage = () => {
         }
       }
 
-      // Fetch pickup coordinates
       if (stops.length > 0) {
         waypoints = stops.map((stop: { lat: string, lng: string }) => `${stop.lat},${stop.lng}`).join('|');
       }
-      
-      const pickupCoords = await fetchCoordinates(rideDetails.pickupLocation);
-      const dropoffCoords = rideDetails.dropoffLocation;
 
-      const url = `${baseMapsUrl}&origin=${pickupCoords.lat},${pickupCoords.lng}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
+      try {
+        const pickupCoords = await fetchCoordinates(rideDetails.pickupLocation);
+        const dropoffCoords = rideDetails.dropoffLocation;
 
-      window.open(url, "_blank");
+        let url;
+        if (!isPickedUp) {
+          url = `${baseMapsUrl}&destination=${pickupCoords.lat},${pickupCoords.lng}&travelmode=driving`;
+        } else {
+          url = `${baseMapsUrl}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
+        }
 
-      setIsOpeningMaps(false);
+        window.open(url, "_blank");
+      } catch (error) {
+        console.error("Error fetching coordinates:", error);
+        alert("Failed to get location coordinates.");
+      } finally {
+        setIsOpeningMaps(false);
+      }
     }
   };
+
 
 
   const [manualDriverLat, setManualDriverLat] = useState("");
