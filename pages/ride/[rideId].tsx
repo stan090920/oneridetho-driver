@@ -393,10 +393,11 @@ const RidePage = () => {
 
         // Fetch pickup coordinates
         const pickupCoords = await fetchCoordinates(rideDetails.pickupLocation);
+        console.log("pickupCoords", pickupCoords);
 
         const dropoffCoords = rideDetails.dropoffLocation;
 
-        const url = `${baseMapsUrl}&origin=${pickupCoords}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
+        const url = `${baseMapsUrl}&origin=${pickupCoords.lat},${pickupCoords.lng}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
 
         window.open(url, "_blank");
       } catch (error) {
