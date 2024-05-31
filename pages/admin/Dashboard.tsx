@@ -105,9 +105,9 @@ const Dashboard = () => {
         {/* Earnings */}
         <div className="p-4 bg-white shadow rounded-lg">
           <h3 className="font-semibold mb-2">Earnings</h3>
-          <p>Total Earnings: ${earningsStats.totalEarnings.toFixed(2)}</p>
+          <p>Total Earnings (before deductions): ${earningsStats.totalEarnings.toFixed(2)}</p>
           <p>OneRideTho Payment: ${earningsStats.oneRideThoPayment.toFixed(2)}</p> {/* Add this line */}
-          <h4 className="font-semibold mt-2">Earnings by Driver</h4>
+          <h4 className="font-semibold mt-2">Earnings by Driver (before deductions)</h4>
           <ul>
             {earningsStats?.earningsByDriver.map(earning => (
               <li key={earning.driverId}>

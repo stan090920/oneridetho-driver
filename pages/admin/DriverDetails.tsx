@@ -23,18 +23,22 @@ interface Rating {
   comment: string;
 }
 
-interface Earnings {
-  daily: { date: string; total: number }[];
-  total: number;
+interface Earning {
+  id: number;
+  date: string;
+  amount: number;
 }
 
 const DriverDetails = () => {
   const router = useRouter();
   const [driver, setDriver] = useState<Driver | null>(null);
   const [ratings, setRatings] = useState<Rating[]>([]);
-  const [earnings, setEarnings] = useState<Earnings | null>(null);
+  const [earnings, setEarnings] = useState<Earning[]>([]);
+  const [totalEarnings, setTotalEarnings] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isResetting, setIsResetting] = useState<boolean>(false);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   useEffect(() => {
     const { id } = router.query;
@@ -52,7 +56,7 @@ const DriverDetails = () => {
       if (response.ok) {
         const data = await response.json();
         setDriver(data);
-        setRatings(data.ratings); // Set ratings as well
+        setRatings(data.ratings);
       } else {
         console.error('Failed to fetch driver information');
       }
@@ -61,12 +65,17 @@ const DriverDetails = () => {
     }
   };
 
-  const fetchDriverEarnings = async (driverId: number) => {
+  const fetchDriverEarnings = async (driverId: number, start?: string, end?: string) => {
     try {
-      const response = await fetch(`/api/drivers/fetch-earnings?id=${driverId}`);
+      const queryParams = new URLSearchParams({ id: driverId.toString() });
+      if (start) queryParams.append('startDate', start);
+      if (end) queryParams.append('endDate', end);
+
+      const response = await fetch(`/api/drivers/fetch-earnings?${queryParams}`);
       if (response.ok) {
         const data = await response.json();
-        setEarnings(data);
+        setEarnings(data.rides);
+        setTotalEarnings(data.total);
       } else {
         console.error('Failed to fetch driver earnings');
       }
@@ -75,7 +84,14 @@ const DriverDetails = () => {
     }
   };
 
-  const totalEarnings = earnings ? earnings.total / 0.7 : 0;
+  const handleDateFilter = () => {
+    const { id } = router.query;
+    if (id && typeof id === 'string') {
+      const driverId = parseInt(id);
+      fetchDriverEarnings(driverId, startDate, endDate);
+    }
+  };
+
   const paymentToOneRideTho = totalEarnings * 0.3;
 
   const handleResetRatings = async () => {
@@ -83,7 +99,7 @@ const DriverDetails = () => {
       setIsResetting(true);
       const response = await axios.delete(`/api/drivers/reset-ratings?id=${driver?.id}`);
       if (response.status === 200) {
-        fetchDriver(driver?.id!); // Fetch the updated driver data
+        fetchDriver(driver?.id!);
       } else {
         console.error('Failed to reset ratings');
       }
@@ -96,7 +112,6 @@ const DriverDetails = () => {
 
   return (
     <div className='relative'>
-      {/* Loading overlay */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white z-10">
           <p>Loading driver information...</p>
@@ -135,20 +150,43 @@ const DriverDetails = () => {
           </div>
           <div className="max-w-screen-lg mx-auto bg-white p-6 rounded shadow mt-4">
             <h3 className="text-xl font-semibold">Earnings</h3>
-            {earnings ? (
+            <div className="mb-4">
+              <label className="block">
+                Start Date:
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="mt-1 block w-full border-gray-300 rounded"
+                />
+              </label>
+              <label className="block mt-2">
+                End Date:
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="mt-1 block w-full border-gray-300 rounded"
+                />
+              </label>
+              <button onClick={handleDateFilter} className="bg-blue-500 text-white px-4 py-2 mt-2 rounded">
+                Filter
+              </button>
+            </div>
+            {earnings.length > 0 ? (
               <div>
-                <p><strong>Total Driver Earnings:</strong> ${earnings.total.toFixed(2)}</p>
-                <p><strong>Payout To ORT:</strong> ${paymentToOneRideTho.toFixed(2)}</p>
-                <h4 className="mt-2">Daily Earnings:</h4>
-                {earnings.daily.map((daily) => (
-                  <div key={daily.date} className="border-t mt-2 pt-2">
-                    <p><strong>Date:</strong> {daily.date}</p>
-                    <p><strong>Total:</strong> ${daily.total.toFixed(2)}</p>
+                <p><strong>Total Driver Earnings for Selected Period:</strong> ${totalEarnings.toFixed(2)}</p>
+                <p><strong>Payout To ORT for Selected Period:</strong> ${paymentToOneRideTho.toFixed(2)}</p>
+                <h4 className="mt-2">Earnings Details:</h4>
+                {earnings.map((earning) => (
+                  <div key={earning.id} className="border-t mt-2 pt-2">
+                    <p><strong>Ride ID:</strong> {earning.id}</p>
+                    <p><strong>Amount:</strong> ${earning.amount.toFixed(2)}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p>No earnings information available.</p>
+              <p>No earnings information available for the selected period.</p>
             )}
           </div>
         </main>
