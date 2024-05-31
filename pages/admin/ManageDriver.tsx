@@ -26,6 +26,8 @@ const ManageDriver = () => {
     carImageUrl: '',
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [carImageUploading, setCarImageUploading] = useState(false);
 
   useEffect(() => {
     const { id } = router.query;
@@ -50,20 +52,110 @@ const ManageDriver = () => {
     }
   };
 
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setPhotoUploading(true);
+      const url = await handleFileUpload(file);
+      if (url) {
+        setDriver({ ...driver, photoUrl: url });
+      }
+      setPhotoUploading(false);
+    } else {
+      alert('Please select a valid image file for the photo.');
+    }
+  };
+
+  const handleCarImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setCarImageUploading(true);
+      const url = await handleFileUpload(file);
+      if (url) {
+        setDriver({ ...driver, carImageUrl: url });
+      }
+      setCarImageUploading(false);
+    } else {
+      alert('Please select a valid image file for the car image.');
+    }
+  };
+
+  const handleFileUpload = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/photo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.imageUrl;
+      } else {
+        console.error('Failed to upload photo');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      return null;
+    }
+  };
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Implement update logic here
-    console.log('Updating driver:', driver);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`/api/drivers?id=${driver.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(driver),
+      });
+
+      if (response.ok) {
+        console.log('Driver updated successfully');
+        router.push('/admin/AdminPanel');
+      } else {
+        console.error('Failed to update driver');
+      }
+    } catch (error) {
+      console.error('Error updating driver:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDelete = async () => {
-    // Implement delete logic here
-    console.log('Deleting driver:', driver);
+    if (!confirm('Are you sure you want to delete this driver?')) {
+      return;
+    }
+    
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`/api/drivers?id=${driver.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        console.log('Driver deleted successfully');
+        router.push('/admin/AdminPanel');
+      } else {
+        console.error('Failed to delete driver');
+      }
+    } catch (error) {
+      console.error('Error deleting driver:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div  className="relative">
-      {/* Loading overlay */}
+    <div className="relative">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white z-10">
           <p>Loading driver information...</p>
@@ -136,10 +228,10 @@ const ManageDriver = () => {
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setDriver({ ...driver, photoUrl: e.target.files?.[0]?.name || '' })}
+                onChange={handlePhotoChange}
                 className="w-full p-2 border rounded"
-                required
               />
+              {photoUploading && <p>Uploading photo...</p>}
             </div>
             <div>
               <label className="block mb-2 font-semibold">Car Image</label>
@@ -149,10 +241,10 @@ const ManageDriver = () => {
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setDriver({ ...driver, carImageUrl: e.target.files?.[0]?.name || '' })}
+                onChange={handleCarImageChange}
                 className="w-full p-2 border rounded"
-                required
               />
+              {carImageUploading && <p>Uploading car image...</p>}
             </div>
             <div className="flex justify-between space-x-2">
               <button type="submit" className="w-1/2 p-2 bg-blue-500 text-white rounded">

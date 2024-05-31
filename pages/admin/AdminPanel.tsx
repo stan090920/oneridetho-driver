@@ -122,6 +122,10 @@ const AdminPanel = () => {
 
   const handleDelete = async () => {
     if (selectedDriverId !== null) {
+      if (!window.confirm('Are you sure you want to delete this driver?')) {
+        return;
+      }
+      
       try {
         const response = await fetch(`/api/drivers?id=${selectedDriverId}`, {
           method: 'DELETE',
