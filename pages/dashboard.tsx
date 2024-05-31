@@ -152,6 +152,14 @@ const Dashboard = () => {
       }
       const inProgressRides = await inProgressResponse.json();
 
+      if (inProgressRides.length > 0) {
+        alert('You currently have a ride in progress and cannot accept a new one.');
+        setIsLoading(false);
+        setLoadingRideId(null);
+        router.push("/");
+        return;
+      }
+
       // Check for scheduling conflicts
       const hasConflict = inProgressRides.some((ride: Ride) => {
         const ridePickupTime = new Date(ride.scheduledPickupTime).getTime();
@@ -213,7 +221,7 @@ const Dashboard = () => {
 
         if (rideData.isAccepted) {
           // Check if the current driver is the one who accepted the ride
-          const acceptedDriverId = rideData.acceptedBy.id;
+          const acceptedDriverId = rideData.driverId;
           const currentDriverId = session?.user.id;
 
           if (acceptedDriverId === currentDriverId) {
@@ -221,7 +229,7 @@ const Dashboard = () => {
           } else {
             alert("This ride has already been accepted by another driver.");
             setSelectedRide(null);
-            router.push("/dashboard");
+            router.push("/");
           }
         } else {
           setSelectedRide(rideData);
