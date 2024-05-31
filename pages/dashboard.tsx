@@ -99,10 +99,17 @@ const Dashboard = () => {
   }, [rideId]);
 
   const acceptRide = async (rideId: number) => {
-    // Check if the ride has already been accepted
+    const driverId = session?.user.id;
+
+    if (!driverId) {
+      alert('Driver ID not found. Please log in again.');
+      return;
+    }
+
+    // Check if the ride has already been accepted by you
     const acceptedRides = JSON.parse(localStorage.getItem('acceptedRides') || '[]');
     if (acceptedRides.includes(rideId)) {
-      console.log("Ride already accepted!");
+      alert("You already accepted this ride!");
       router.push(`/ride/${rideId}`);
       return;
     }
@@ -112,12 +119,6 @@ const Dashboard = () => {
     setError(null);
 
     try {
-      const driverId = session?.user.id;
-
-      if (!driverId) {
-        throw new Error('Driver ID not found in session.');
-      }
-
       // Fetch the ride details
       const response = await fetch(`/api/rides/${rideId}`);
       if (!response.ok) {
@@ -131,6 +132,16 @@ const Dashboard = () => {
         alert(`You cannot accept a ride that is ${rideData.status}.`);
         setIsLoading(false);
         setLoadingRideId(null);
+        router.push("/");
+        return;
+      }
+
+      // Check if the ride has already been accepted by another driver
+      if (rideData.isAccepted) {
+        alert("This ride has already been accepted by another driver.");
+        setIsLoading(false);
+        setLoadingRideId(null);
+        router.push("/");
         return;
       }
 
