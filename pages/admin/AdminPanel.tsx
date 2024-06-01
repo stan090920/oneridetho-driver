@@ -123,26 +123,28 @@ const AdminPanel = () => {
   const handleDelete = async () => {
     if (selectedDriverId !== null) {
       if (!window.confirm('Are you sure you want to delete this driver?')) {
-        return;
+          return;
       }
-      
-      try {
-        const response = await fetch(`/api/drivers?id=${selectedDriverId}`, {
-          method: 'DELETE',
-        });
 
-        if (response.ok) {
-          setDrivers(drivers.filter(driver => driver.id !== selectedDriverId));
-          setSelectedDriverId(null);
-          console.log('Driver deleted successfully');
-        } else {
-          console.error('Failed to delete driver');
-        }
+      try {
+          const response = await fetch(`/api/drivers?id=${selectedDriverId}`, {
+              method: 'DELETE',
+          });
+
+          if (response.ok) {
+              setDrivers(drivers.filter(driver => driver.id !== selectedDriverId));
+              setSelectedDriverId(null);
+              console.log('Driver deleted successfully');
+          } else {
+              const errorText = await response.text();
+              console.error('Failed to delete driver:', errorText);
+          }
       } catch (error) {
-        console.error('Error deleting driver:', error);
+          console.error('Error deleting driver:', error);
       }
     }
   };
+
 
   const handleModify = () => {
     if (selectedDriverId !== null) {

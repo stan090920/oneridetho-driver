@@ -94,10 +94,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const driverId = parseInt(req.query.id as string);
 
+      if (isNaN(driverId)) {
+        return res.status(400).json({ message: 'Invalid driver ID' });
+      }
+
+      // Log the driverId to be deleted
+      console.log(`Attempting to delete driver with ID: ${driverId}`);
+
+      // First, delete all related ratings
+      await prisma.rating.deleteMany({
+        where: { driverId },
+      });
+
+      // Then, delete the driver
       await prisma.driver.delete({
-        where: {
-          id: driverId
-        },
+        where: { id: driverId },
       });
 
       res.status(200).json({ message: 'Driver deleted successfully' });
