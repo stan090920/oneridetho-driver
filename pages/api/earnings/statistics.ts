@@ -39,7 +39,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }) as unknown as EarningsByDriver[];
 
       // Fetch driver names separately
-      const driverIds = earningsByDriver.map((item) => item.driverId);
+      let driverIds = earningsByDriver.map((item) => item.driverId);
+      driverIds = driverIds.filter((id) => id !== null); // Filter out null values
+
+      if (driverIds.length === 0) {
+        return res.status(200).json({
+          totalEarnings,
+          oneRideThoPayment,
+          earningsByDriver: [],
+          earningsTrends: [],
+        });
+      }
+
       const drivers = await prisma.driver.findMany({
         where: {
           id: { in: driverIds },
