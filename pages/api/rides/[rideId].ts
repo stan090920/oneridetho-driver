@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ message: 'Ride not found' });
       }
 
-      if (ride.isAccepted && ride.driverId !== driverId) {
+      if (ride.isAccepted && (!driverId || ride.driverId !== driverId)) {
         return res.status(403).json({ message: 'This ride has already been accepted by another driver.' });
       }
 

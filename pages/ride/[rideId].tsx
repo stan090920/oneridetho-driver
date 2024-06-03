@@ -303,6 +303,7 @@ const RidePage = () => {
         await axios.patch(`/api/rides/${rideId}`, {
           status: "Completed",
           dropoffTime: new Date(),
+          driverId: session?.user.id,
         });
         alert("Ride completed successfully!");
 
