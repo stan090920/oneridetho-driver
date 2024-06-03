@@ -277,6 +277,7 @@ const RidePage = () => {
         await axios.patch(`/api/rides/${rideId}`, {
           status: "InProgress",
           pickupTime: new Date(),
+          driverId: session?.user.id,
         });
 
         const dropoffCoordinates = await fetchCoordinates(
