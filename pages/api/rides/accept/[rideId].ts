@@ -33,6 +33,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
+      const ride = await prisma.ride.findUnique({
+        where: { id: rideId },
+      });
+
+      if (ride?.isAccepted) {
+        if (ride?.driverId === driverId) {
+          return res.status(200).json({ message: 'You already accepted this ride' });
+        } else {
+          return res.status(400).json({ message: 'Ride already accepted by another driver' });
+        }
+      }
+
       const updatedRide = await prisma.ride.update({
         where: { id: rideId },
         data: {

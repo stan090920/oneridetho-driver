@@ -44,6 +44,7 @@ interface Ride {
   fare: number;
   user: User;
   status: string;
+  pickupTime?: string;
   stops?: Location[];
 }
 
@@ -261,6 +262,26 @@ const RidePage = () => {
       if (rideDetails.status === "Completed") {
         alert("This ride has already been completed.");
         return;
+      }
+
+      // Check if the ride is a scheduled ride and if it's too early to pick up
+      if (rideDetails.status == "Scheduled") {
+        if (rideDetails.pickupTime){
+          const scheduledTime = new Date(rideDetails.pickupTime).getTime();
+          console.log("Pickup time: " + scheduledTime);
+
+          const currentTime = new Date().getTime();
+          const fiveMinutesInMilliseconds = 5 * 60 * 1000;
+
+          if (currentTime < scheduledTime - fiveMinutesInMilliseconds) {
+            alert("You can only pick up the customer 5 minutes before the scheduled pickup time.");
+            return;
+          }
+        } else {
+          console.error("pickupTime is missing from rideDetails.");
+          alert("There is no scheduled pickup time for this ride.");
+          return;
+        }
       }
 
       // Check if the driver is near the pickup location

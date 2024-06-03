@@ -106,14 +106,6 @@ const Dashboard = () => {
       return;
     }
 
-    // Check if the ride has already been accepted by you
-    const acceptedRides = JSON.parse(localStorage.getItem('acceptedRides') || '[]');
-    if (acceptedRides.includes(rideId)) {
-      alert("You already accepted this ride!");
-      router.push(`/ride/${rideId}`);
-      return;
-    }
-
     setLoadingRideId(rideId);
     setIsLoading(true);
     setError(null);
@@ -137,7 +129,11 @@ const Dashboard = () => {
       }
 
       // Check if the ride has already been accepted by another driver
-      if (rideData.isAccepted) {
+      if (rideData.isAccepted && rideData.driverId === driverId) {
+        alert("You already accepted this ride!");
+        router.push(`/ride/${rideId}`);
+        return;
+      } else if (rideData.isAccepted && rideData.driverId !== driverId) {
         alert("This ride has already been accepted by another driver.");
         setIsLoading(false);
         setLoadingRideId(null);
@@ -185,9 +181,6 @@ const Dashboard = () => {
       if (!acceptResponse.ok) {
         throw new Error(`Error: ${acceptResponse.status}`);
       }
-
-      // Update accepted rides in local storage
-      localStorage.setItem('acceptedRides', JSON.stringify([...acceptedRides, rideId]));
 
       // Remove accepted ride from the list
       const updatedRides = rides.filter((ride) => ride.id !== rideId);
