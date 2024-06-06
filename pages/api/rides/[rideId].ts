@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
 import { Twilio } from 'twilio';
+import sendEmail from '../../../lib/emailServer';
 
 const prisma = new PrismaClient();
 const twilioClient = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
@@ -48,6 +49,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         include: { user: true },
       });
+
+      if (updatedRide.user?.email) {
+        let subject: string = '';
+        let text: string = '';
+        let html: string = '';
+
+        if (status === 'InProgress') {
+          subject = 'Your driver has arrived';
+          text = 'Your driver has arrived, you have 10 minutes to enter the vehicle, otherwise your ride will be cancelled.';
+          html = `<p>Your driver has arrived, you have 10 minutes to enter the vehicle, otherwise your ride will be cancelled.</p>`;
+        } else if (status === 'Completed') {
+          const ratingLink = `https://oneridetho-ten.vercel.app/rides/${rideIdNumber}`;
+          subject = 'Thank you for riding with us';
+          text = `Thank you for riding with us. Please rate your driver here: ${ratingLink}`;
+          html = `<p>Thank you for riding with us. Please rate your driver here: <a href="${ratingLink}">Rate your driver</a></p>`;
+        }
+
+        await sendEmail({
+          subject: subject,
+          text: text,
+          html: html,
+          recipient_email: updatedRide.user.email,
+        });
+      }
 
       if (status === 'InProgress' && updatedRide.user?.phone) {
         await twilioClient.messages.create({
