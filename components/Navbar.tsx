@@ -40,6 +40,7 @@ const Navbar = () => {
     setDropdownOpen(false);
   };
 
+  
   return (
     <div className="bg-black relative">
       <div className="flex items-center justify-between w-[95%] h-[10vh]">
