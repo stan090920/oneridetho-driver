@@ -301,9 +301,8 @@ const RidePage = () => {
           driverId: session?.user.id,
         });
 
-        const dropoffCoordinates = await fetchCoordinates(
-          rideDetails.dropoffLocation
-        );
+        const dropoffCoordinates = JSON.parse(rideDetails.dropoffLocation);
+
         if (dropoffCoordinates) {
           setDropoffLocation(dropoffCoordinates);
         }
@@ -352,9 +351,8 @@ const RidePage = () => {
 
           setRideDetails(fetchedRideDetails);
 
-          const coordinates = await fetchCoordinates(
-            fetchedRideDetails.pickupLocation
-          );
+          const coordinates = JSON.parse(fetchedRideDetails.pickupLocation);
+
           if (coordinates) {
             setPickupLocation(coordinates);
           }
@@ -428,7 +426,8 @@ const RidePage = () => {
       }
 
       try {
-        const pickupCoords = await fetchCoordinates(rideDetails.pickupLocation);
+        const pickupCoords = JSON.parse(rideDetails.pickupLocation);
+
         const dropoffCoords = rideDetails.dropoffLocation;
 
         let url;

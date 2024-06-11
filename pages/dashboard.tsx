@@ -10,6 +10,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { HiMiniStar } from "react-icons/hi2";
+import axios from 'axios';
 
 interface User {
   id: number;
@@ -68,6 +69,7 @@ const Dashboard = () => {
       router.push("/");
     }
   }, [session, status, router]);
+
   const fetchRideById = async (rideId: any) => {
     try {
       const response = await fetch(`/api/rides/${rideId}`);
@@ -286,25 +288,15 @@ const Dashboard = () => {
     }
   };
 
-  async function reverseGeocode(lat: number, lng: number) {
-    const apiKey = process.env.API_KEY;
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
-
+  const reverseGeocode = async (lat: number, lng: number): Promise<string> =>  {
     try {
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (!data.error_message && data.results && data.results.length > 0) {
-        return data.results[0].formatted_address;
-      } else {
-        console.error("Geocoding error:", data.error_message);
-        return "Address not found";
-      }
+      const response = await axios.post('/api/reverseGeocode', { lat, lng });
+      return response.data.address;
     } catch (error) {
-      console.error("Error in reverse geocoding:", error);
-      return "Address not found";
+      console.error('Error in reverse geocoding:', error);
+      return '';
     }
-  }
+  };
 
   function isCoordinateFormat(location: string) {
     return (
@@ -333,13 +325,14 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchAndSetAddress = async () => {
-      if (selectedRide && selectedRide.pickupLocation) {
-        let address;
+      if (selectedRide?.pickupLocation) {
+        let address; 
 
-        if (isCoordinateFormat(selectedRide.pickupLocation)) {
+        if (!isCoordinateFormat(selectedRide.pickupLocation)) {
+          const pickupLoc = JSON.parse(selectedRide.pickupLocation);
           address = await reverseGeocode(
-            selectedRide.pickupLocation.lat,
-            selectedRide.pickupLocation.lng
+            pickupLoc.lat,
+            pickupLoc.lng
           );
         } else {
           address = selectedRide.pickupLocation;
@@ -367,13 +360,18 @@ const Dashboard = () => {
       }
     };
 
-    if (selectedRide && selectedRide.dropoffLocation) {
-      const dropoffAddressString =
-        typeof selectedRide.dropoffLocation === "string"
-          ? selectedRide.dropoffLocation
-          : JSON.stringify(selectedRide.dropoffLocation);
-      setDropoffAddress(shortenAddress(dropoffAddressString));
-    }
+    const setAddress = async () => {
+      if (selectedRide?.dropoffLocation) {
+        const dropoffLoc = JSON.parse(selectedRide.dropoffLocation);
+        const dropoffAddress = await reverseGeocode(
+          dropoffLoc.lat,
+          dropoffLoc.lng
+        );
+        setDropoffAddress(dropoffAddress);
+      }
+    };
+
+    setAddress();
   }, [selectedRide]);
 
   function removePlusCode(fullAddress: string): string {
@@ -479,25 +477,28 @@ const Dashboard = () => {
         zoom={13}
         options={mapOptions}
       >
-        {rides.map((ride) => (
-          <Marker
-            key={ride.id}
-            position={ride.pickupLocation}
-            onClick={() => onMarkerClick(ride)}
-          />
+        {rides.map((ride) => {
+          return (
+            <Marker
+              key={ride.id}
+              position={ride.pickupLocation}
+              onClick={() => onMarkerClick(ride)}
+            />
+          );
+        })}
+
+        {inProgressRides.map((ride) => (
+          <div key={ride.id} className="absolute bottom-0 bg-white w-full h-[20vh] pt-4 pb-2 rounded-t-[16px]">
+            <a href={`/ride/${ride.id}`}>
+              <div className="text-center">Go Back to Ride</div>
+              <div className="px-2 mt-2">
+                <li>{ride.pickupLocation}</li>
+                <div className="border-l-2 h-5 border-black"></div>
+                <li>{ride.dropoffLocation}</li>
+              </div>
+            </a>
+          </div>
         ))}
-           {inProgressRides.map((ride) => (
-  <div key={ride.id} className="absolute bottom-0 bg-white w-full h-[20vh] pt-4 pb-2 rounded-t-[16px]">
-    <a href={`/ride/${ride.id}`}>
-      <div className="text-center">Go Back to Ride</div>
-      <div className="px-2 mt-2">
-        <li>{ride.pickupLocation}</li>
-        <div className="border-l-2 h-5 border-black"></div>
-        <li>{ride.dropoffLocation}</li>
-      </div>
-    </a>
-  </div>
-))}
 
         {selectedRide && (
           <div className="absolute bottom-0 bg-white w-full h-[30vh] pt-4 pb-2 rounded-t-[16px] overflow-y-scroll">
@@ -525,7 +526,8 @@ const Dashboard = () => {
               );
             })()}
 
-{showSchedulePopup && renderSchedulePopup()}
+            {showSchedulePopup && renderSchedulePopup()}
+
             <div className="text-center">
               <button
                 onClick={() => acceptRide(selectedRide.id)}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FaHistory } from "react-icons/fa";
 import { useSession } from "next-auth/react";
 import router from "next/router";
+import axios from 'axios';
 
 type Ride = {
   id: number;
@@ -16,6 +17,11 @@ type Ride = {
   };
 };
 
+interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
 interface DailyEarning {
   date: string;
   total: number;
@@ -28,6 +34,7 @@ const Task = () => {
   const [completedRides, setCompletedRides] = useState<Ride[]>([]);
   const [cancelledRides, setCancelledRides] = useState<Ride[]>([]);
   const { data: session, status } = useSession();
+  const [address, setAddress] = useState('');
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -73,11 +80,41 @@ const Task = () => {
       const data = await response.json();
       if (Array.isArray(data)) {
         // Separate rides based on status
-        const requested = data.filter((ride) => ride.status === "Requested");
-        const scheduled = data.filter((ride) => ride.status === "Scheduled");
-        const inProgress = data.filter((ride) => ride.status === "InProgress");
-        const completed = data.filter((ride) => ride.status === "Completed");
-        const cancelled = data.filter((ride) => ride.status === "Cancelled");
+        const requested = await Promise.all(data.filter((ride) => ride.status === "Requested").map(async (ride) => {
+          const pickupLocation = JSON.parse(ride.pickupLocation);
+          const dropoffLocation = JSON.parse(ride.dropoffLocation);
+          const pickupAddress = await reverseGeocode(pickupLocation.lat, pickupLocation.lng);
+          const dropoffAddress = await reverseGeocode(dropoffLocation.lat, dropoffLocation.lng);
+          return { ...ride, pickupLocation: pickupAddress, dropoffLocation: dropoffAddress };
+        }));
+        const scheduled = await Promise.all(data.filter((ride) => ride.status === "Scheduled").map(async (ride) => {
+          const pickupLocation = JSON.parse(ride.pickupLocation);
+          const dropoffLocation = JSON.parse(ride.dropoffLocation);
+          const pickupAddress = await reverseGeocode(pickupLocation.lat, pickupLocation.lng);
+          const dropoffAddress = await reverseGeocode(dropoffLocation.lat, dropoffLocation.lng);
+          return { ...ride, pickupLocation: pickupAddress, dropoffLocation: dropoffAddress };
+        }));
+        const inProgress = await Promise.all(data.filter((ride) => ride.status === "InProgress").map(async (ride) => {
+          const pickupLocation = JSON.parse(ride.pickupLocation);
+          const dropoffLocation = JSON.parse(ride.dropoffLocation);
+          const pickupAddress = await reverseGeocode(pickupLocation.lat, pickupLocation.lng);
+          const dropoffAddress = await reverseGeocode(dropoffLocation.lat, dropoffLocation.lng);
+          return { ...ride, pickupLocation: pickupAddress, dropoffLocation: dropoffAddress };
+        }));
+        const completed = await Promise.all(data.filter((ride) => ride.status === "Completed").map(async (ride) => {
+          const pickupLocation = JSON.parse(ride.pickupLocation);
+          const dropoffLocation = JSON.parse(ride.dropoffLocation);
+          const pickupAddress = await reverseGeocode(pickupLocation.lat, pickupLocation.lng);
+          const dropoffAddress = await reverseGeocode(dropoffLocation.lat, dropoffLocation.lng);
+          return { ...ride, pickupLocation: pickupAddress, dropoffLocation: dropoffAddress };
+        }));
+        const cancelled = await Promise.all(data.filter((ride) => ride.status === "Cancelled").map(async (ride) => {
+          const pickupLocation = JSON.parse(ride.pickupLocation);
+          const dropoffLocation = JSON.parse(ride.dropoffLocation);
+          const pickupAddress = await reverseGeocode(pickupLocation.lat, pickupLocation.lng);
+          const dropoffAddress = await reverseGeocode(dropoffLocation.lat, dropoffLocation.lng);
+          return { ...ride, pickupLocation: pickupAddress, dropoffLocation: dropoffAddress };
+        }));
         // Update state with fetched data
         setRequestedRides(requested);
         setScheduledRides(scheduled);
@@ -89,6 +126,7 @@ const Task = () => {
       console.error("Error fetching rides:", error);
     }
   };
+
 
   const handleRideHistoryType = async (type: "completed" | "cancelled") => {
     setShowRideHistory(false);
@@ -149,44 +187,57 @@ const Task = () => {
     return currentTime >= scheduledPickupTime;
   };
 
-  const renderRides = (rides: Ride[]) => {
-  return rides.length > 0 ? (
-    rides.map((ride) => {
-      const rideLink = ride.status === "InProgress" ? `/ride/${ride.id}` : `/dashboard?rideId=${ride.id}`;
-      return (
-        <li key={ride.id} className="border-2 py-2 pl-2 pr-2 mt-2 rounded-md">
-          <Link href={rideLink}>
-            <strong>Ride ID:</strong> {ride.id}
-            <div>
-              <strong>Status:</strong> {ride.status}
-            </div>
-            <div>
-              <strong>Customer Name:</strong> {ride.user?.name}
-            </div>
-            <div>
-              <strong>Pickup Location:</strong> {JSON.stringify(ride.pickupLocation)}
-            </div>
-            <div>
-              <strong>Dropoff Location:</strong> {JSON.stringify(ride.dropoffLocation)}
-            </div>
-            {ride.scheduledPickupTime && (
+    
+  const reverseGeocode = async (lat: number, lng: number): Promise<string> =>  {
+    try {
+      const response = await axios.post('/api/reverseGeocode', { lat, lng });
+      setAddress(response.data.address);
+      return response.data.address;
+    } catch (error) {
+      console.error('Error in reverse geocoding:', error);
+      return '';
+    }
+  };
+
+  const RenderRides = (rides: Ride[]) => {
+    return rides.length > 0 ? (
+      rides.map((ride) => {
+        const rideLink = ride.status === "InProgress" ? `/ride/${ride.id}` : `/dashboard?rideId=${ride.id}`;
+
+        return (
+          <li key={ride.id} className="border-2 py-2 pl-2 pr-2 mt-2 rounded-md">
+            <Link href={rideLink}>
+              <strong>Ride ID:</strong> {ride.id}
               <div>
-                <strong>Scheduled Pickup Time:</strong> {formatDate(ride.scheduledPickupTime)}
+                <strong>Status:</strong> {ride.status}
               </div>
-            )}
-            {ride.fare && (
               <div>
-                <strong>Fare:</strong> ${ride.fare.toFixed(2)}
+                <strong>Customer Name:</strong> {ride.user?.name}
               </div>
-            )}
-          </Link>
-        </li>
-      );
-    })
-  ) : (
-    renderNoRidesMessage()
-  );
-};
+              <div>
+                <strong>Pickup Location:</strong> {ride.pickupLocation}
+              </div>
+              <div>
+                <strong>Dropoff Location:</strong> {ride.dropoffLocation}
+              </div>
+              {ride.scheduledPickupTime && (
+                <div>
+                  <strong>Scheduled Pickup Time:</strong> {formatDate(ride.scheduledPickupTime)}
+                </div>
+              )}
+              {ride.fare && (
+                <div>
+                  <strong>Fare:</strong> ${ride.fare.toFixed(2)}
+                </div>
+              )}
+            </Link>
+          </li>
+        );
+      })
+    ) : (
+      renderNoRidesMessage()
+    );
+  };
 
 
 
@@ -288,14 +339,14 @@ const Task = () => {
       <ul className="px-2 overflow-y-scroll h-[60vh]">
         {(activeButton === "requested" || activeButton === "scheduled") &&
           (showRequestedRides
-            ? renderRides(requestedRides)
-            : renderRides(scheduledRides))}
+            ? RenderRides(requestedRides)
+            : RenderRides(scheduledRides))}
         {activeButton === "history" &&
           (rideHistoryType === "completed"
-            ? renderRides(completedRides)
-            : renderRides(cancelledRides))}
+            ? RenderRides(completedRides)
+            : RenderRides(cancelledRides))}
         {activeButton === "inProgress" &&
-            renderRides(inProgressRides)}
+            RenderRides(inProgressRides)}
       </ul>
     </div>
   );
