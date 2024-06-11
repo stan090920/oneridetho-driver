@@ -573,8 +573,9 @@ const RidePage = () => {
               <button
                 onClick={openInMaps}
                 className="px-4 py-2 bg-black text-white rounded-md"
+                disabled={isOpeningMaps}
               >
-                {isOpeningMaps ? <Spinner /> : "Open in Maps"}
+                {isOpeningMaps ? (<Spinner />) : ("Open in Maps")}
               </button>
             </div>
           </div>
