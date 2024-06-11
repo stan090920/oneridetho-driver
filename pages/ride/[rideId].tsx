@@ -428,13 +428,13 @@ const RidePage = () => {
       try {
         const pickupCoords = JSON.parse(rideDetails.pickupLocation);
 
-        const dropoffCoords = rideDetails.dropoffLocation;
+        const dropoffCoords = JSON.parse(rideDetails.dropoffLocation);
 
         let url;
         if (!isPickedUp) {
           url = `${baseMapsUrl}&destination=${pickupCoords.lat},${pickupCoords.lng}&travelmode=driving`;
         } else {
-          url = `${baseMapsUrl}&destination=${dropoffCoords}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
+          url = `${baseMapsUrl}&destination=${dropoffCoords.lat},${dropoffCoords.lng}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
         }
 
         window.open(url, "_blank");
