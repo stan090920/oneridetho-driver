@@ -12,11 +12,10 @@ model User {
   id       Int       @id @default(autoincrement())
   name     String
   photoUrl String?
-  dob      DateTime
   email    String    @unique
   rating   Float?    @default(5)
   phone    String?   @unique
-  gender   Gender?
+  provider String 
   account  Account?
   bookings Booking[]
   rides    Ride[]    @relation("UserRides")
@@ -111,12 +110,6 @@ model Location {
   long     Json
   driverId Int?    @unique
   Driver   Driver? @relation(fields: [driverId], references: [id])
-}
-
-enum Gender {
-  Male
-  Female
-  Other
 }
 
 enum RideStatus {
