@@ -4,6 +4,7 @@ import { FaHistory } from "react-icons/fa";
 import { useSession } from "next-auth/react";
 import router from "next/router";
 import axios from 'axios';
+import moment from "moment-timezone";
 
 type Ride = {
   id: number;
@@ -54,18 +55,10 @@ const Task = () => {
   >("requested");
 
   const formatDate = (dateString: string): string => {
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: "long",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-    };
-    return new Intl.DateTimeFormat("en-US", options).format(
-      new Date(dateString)
-    );
+    // Convert the date to the Bahamas timezone
+    const dateInBahamas = moment.tz(dateString, "America/Nassau");
+
+    return dateInBahamas.format("dddd, MMM D, YYYY, h:mm A");
   };
 
   // Function to fetch rides data
