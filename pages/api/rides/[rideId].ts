@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           text = 'Your driver has arrived, you have 10 minutes to enter the vehicle, otherwise your ride will be cancelled.';
           html = `<p>Your driver has arrived, you have 10 minutes to enter the vehicle, otherwise your ride will be cancelled.</p>`;
         } else if (status === 'Completed') {
-          const ratingLink = `https://oneridetho-ten.vercel.app/rides/${rideIdNumber}`;
+          const ratingLink = `https://www.oneridetho.com/rides/${rideIdNumber}`;
           subject = 'Thank you for riding with us';
           text = `Thank you for riding with us. Please rate your driver here: ${ratingLink}`;
           html = `<p>Thank you for riding with us. Please rate your driver here: <a href="${ratingLink}">Rate your driver</a></p>`;
@@ -81,7 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           to: updatedRide.user.phone,
         });
       } else if (status === 'Completed' && updatedRide.user?.phone) {
-        const ratingLink = `https://oneridetho-ten.vercel.app/rides/${rideIdNumber}`;
+        const ratingLink = `https://www.oneridetho.com/rides/${rideIdNumber}`;
         await twilioClient.messages.create({
           body: `Thank you for riding with us. Please rate your driver here: ${ratingLink}`,
           from: process.env.TWILIO_PHONE_NUMBER,

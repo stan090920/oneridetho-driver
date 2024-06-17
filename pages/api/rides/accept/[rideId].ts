@@ -66,12 +66,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (updatedRide.isScheduled && updatedRide.scheduledPickupTime) {
           const formattedTime = formatTime(updatedRide.scheduledPickupTime);
           subject = `Your scheduled ride for ${formattedTime} has been confirmed!`;
-          text = `Your scheduled ride for ${formattedTime} has been confirmed! Your driver ${updatedRide.driver.name} will arrive in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. Please visit https://oneridetho-ten.vercel.app/rides/${updatedRide.id} for more details.\n\nHave a great trip!`;
-          html = `<p>Your scheduled ride for ${formattedTime} has been confirmed! Your driver ${updatedRide.driver.name} will arrive in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. Please visit <a href="https://oneridetho-ten.vercel.app/rides/${updatedRide.id}">here</a> for more details.</p><p>Have a great trip!</p>`;
+          text = `Your scheduled ride for ${formattedTime} has been confirmed! Your driver ${updatedRide.driver.name} will arrive in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. Please visit https://www.oneridetho.com/rides/${updatedRide.id} for more details.\n\nHave a great trip!`;
+          html = `<p>Your scheduled ride for ${formattedTime} has been confirmed! Your driver ${updatedRide.driver.name} will arrive in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. Please visit <a href="https://www.oneridetho.com/rides/${updatedRide.id}">here</a> for more details.</p><p>Have a great trip!</p>`;
         } else {
           subject = `Your ride with ${updatedRide.driver.name} has been confirmed`;
-          text = `Great news! Your ride with ${updatedRide.driver.name} has been confirmed. Your driver will be in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. For more details about your ride, visit: https://oneridetho-ten.vercel.app/rides/${updatedRide.id}\n\nWe wish you a safe and pleasant journey!`;
-          html = `<p>Great news! Your ride with ${updatedRide.driver.name} has been confirmed. Your driver will be in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. For more details about your ride, visit: <a href="https://oneridetho-ten.vercel.app/rides/${updatedRide.id}">here</a></p><p>We wish you a safe and pleasant journey!</p>`;
+          text = `Great news! Your ride with ${updatedRide.driver.name} has been confirmed. Your driver will be in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. For more details about your ride, visit: https://www.oneridetho.com/rides/${updatedRide.id}\n\nWe wish you a safe and pleasant journey!`;
+          html = `<p>Great news! Your ride with ${updatedRide.driver.name} has been confirmed. Your driver will be in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. For more details about your ride, visit: <a href="https://www.oneridetho.com/rides/${updatedRide.id}">here</a></p><p>We wish you a safe and pleasant journey!</p>`;
         }
 
         await sendEmail({
@@ -87,9 +87,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         let bodyMessage;
         if (updatedRide.isScheduled && updatedRide.scheduledPickupTime) {
           const formattedTime = formatTime(updatedRide.scheduledPickupTime);
-          bodyMessage = `Your scheduled ride for ${formattedTime} has been confirmed! Your driver ${updatedRide.driver.name} will arrive in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. Please visit https://oneridetho-ten.vercel.app/rides/${updatedRide.id} for more details.\n\nHave a great trip!`;
+          bodyMessage = `Your scheduled ride for ${formattedTime} has been confirmed! Your driver ${updatedRide.driver.name} will arrive in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. Please visit https://www.oneridetho.com/rides/${updatedRide.id} for more details.\n\nHave a great trip!`;
         } else {
-          bodyMessage = `Great news! Your ride with ${updatedRide.driver.name} has been confirmed. Your driver will be in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. For more details about your ride, visit: https://oneridetho-ten.vercel.app/rides/${updatedRide.id}\n\nWe wish you a safe and pleasant journey!`;
+          bodyMessage = `Great news! Your ride with ${updatedRide.driver.name} has been confirmed. Your driver will be in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. For more details about your ride, visit: https://www.oneridetho.com/rides/${updatedRide.id}\n\nWe wish you a safe and pleasant journey!`;
         }
 
         await twilioClient.messages.create({

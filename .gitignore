@@ -38,3 +38,4 @@ next-env.d.ts
 .env
 
 cleaning.ts
+scripts/create-admin.mjs
