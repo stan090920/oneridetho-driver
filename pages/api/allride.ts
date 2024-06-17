@@ -16,6 +16,8 @@ export default async function handler(
           pickupLocation: true,
           dropoffLocation: true,
           scheduledPickupTime: true,
+          isAccepted: true,
+          driverId: true,
           fare: true,
           user: {
             select: {
@@ -23,7 +25,7 @@ export default async function handler(
               phone: true,
             },
           },
-        }
+        },
       });
       res.status(200).json(rides);
     } catch (error) {

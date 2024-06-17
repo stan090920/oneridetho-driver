@@ -12,6 +12,8 @@ type Ride = {
   pickupLocation: any;
   dropoffLocation: any;
   scheduledPickupTime?: string;
+  isAccepted: boolean;
+  driverId: number;
   fare?: number;
   user?: {
     name: string;
@@ -72,42 +74,30 @@ const Task = () => {
       const response = await fetch("/api/allride");
       const data = await response.json();
       if (Array.isArray(data)) {
-        // Separate rides based on status
-        const requested = await Promise.all(data.filter((ride) => ride.status === "Requested").map(async (ride) => {
+        // Function to process ride locations
+        const processRideLocations = async (ride: Ride) => {
           const pickupLocation = JSON.parse(ride.pickupLocation);
           const dropoffLocation = JSON.parse(ride.dropoffLocation);
           const pickupAddress = await reverseGeocode(pickupLocation.lat, pickupLocation.lng);
           const dropoffAddress = await reverseGeocode(dropoffLocation.lat, dropoffLocation.lng);
-          return { ...ride, pickupLocation: pickupAddress, dropoffLocation: dropoffAddress };
-        }));
-        const scheduled = await Promise.all(data.filter((ride) => ride.status === "Scheduled").map(async (ride) => {
-          const pickupLocation = JSON.parse(ride.pickupLocation);
-          const dropoffLocation = JSON.parse(ride.dropoffLocation);
-          const pickupAddress = await reverseGeocode(pickupLocation.lat, pickupLocation.lng);
-          const dropoffAddress = await reverseGeocode(dropoffLocation.lat, dropoffLocation.lng);
-          return { ...ride, pickupLocation: pickupAddress, dropoffLocation: dropoffAddress };
-        }));
-        const inProgress = await Promise.all(data.filter((ride) => ride.status === "InProgress").map(async (ride) => {
-          const pickupLocation = JSON.parse(ride.pickupLocation);
-          const dropoffLocation = JSON.parse(ride.dropoffLocation);
-          const pickupAddress = await reverseGeocode(pickupLocation.lat, pickupLocation.lng);
-          const dropoffAddress = await reverseGeocode(dropoffLocation.lat, dropoffLocation.lng);
-          return { ...ride, pickupLocation: pickupAddress, dropoffLocation: dropoffAddress };
-        }));
-        const completed = await Promise.all(data.filter((ride) => ride.status === "Completed").map(async (ride) => {
-          const pickupLocation = JSON.parse(ride.pickupLocation);
-          const dropoffLocation = JSON.parse(ride.dropoffLocation);
-          const pickupAddress = await reverseGeocode(pickupLocation.lat, pickupLocation.lng);
-          const dropoffAddress = await reverseGeocode(dropoffLocation.lat, dropoffLocation.lng);
-          return { ...ride, pickupLocation: pickupAddress, dropoffLocation: dropoffAddress };
-        }));
-        const cancelled = await Promise.all(data.filter((ride) => ride.status === "Cancelled").map(async (ride) => {
-          const pickupLocation = JSON.parse(ride.pickupLocation);
-          const dropoffLocation = JSON.parse(ride.dropoffLocation);
-          const pickupAddress = await reverseGeocode(pickupLocation.lat, pickupLocation.lng);
-          const dropoffAddress = await reverseGeocode(dropoffLocation.lat, dropoffLocation.lng);
-          return { ...ride, pickupLocation: pickupAddress, dropoffLocation: dropoffAddress };
-        }));
+          return {...ride, pickupLocation: pickupAddress, dropoffLocation: dropoffAddress, };
+        };
+
+        // Filter and process rides based on status and acceptance
+        const requested = await Promise.all(data.filter((ride) => ride.status === "Requested" && !ride.isAccepted).map(processRideLocations)
+        );
+        const scheduled = await Promise.all(data.filter((ride) => ride.status === "Scheduled" && !ride.isAccepted).map(processRideLocations));
+        const inProgress = await Promise.all(
+          data.filter((ride) =>
+                (ride.status === "InProgress" && ride.driverId === session?.user.id) ||
+                (ride.isAccepted &&(ride.status === "Requested" || ride.status === "Scheduled") && ride.driverId === session?.user.id)
+            ).map(processRideLocations));
+
+        const completed = await Promise.all(data.filter((ride) => (ride.status === "Completed") && 
+          ride.driverId === session?.user.id).map(processRideLocations));
+        const cancelled = await Promise.all(data.filter((ride) => (ride.status === "Cancelled") && 
+          ride.driverId === session?.user.id).map(processRideLocations));
+
         // Update state with fetched data
         setRequestedRides(requested);
         setScheduledRides(scheduled);
@@ -119,6 +109,7 @@ const Task = () => {
       console.error("Error fetching rides:", error);
     }
   };
+
 
 
   const handleRideHistoryType = async (type: "completed" | "cancelled") => {
@@ -276,7 +267,7 @@ const Task = () => {
             activeButton === "requested" ? "text-blue-500" : ""
           }`}
         >
-          Requested
+          Booked Now
         </button>
         <button
           onClick={() => {
@@ -287,7 +278,7 @@ const Task = () => {
             activeButton === "scheduled" ? "text-blue-500" : ""
           }`}
         >
-          Scheduled
+          Prebooked
         </button>
         <button
           onClick={() => {
