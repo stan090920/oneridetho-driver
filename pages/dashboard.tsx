@@ -2,8 +2,8 @@ import { Spinner } from "@/components/Spinner";
 import {
   GoogleMap,
   InfoWindow,
-  LoadScript,
   Marker,
+  useJsApiLoader,
 } from "@react-google-maps/api";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -11,6 +11,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { HiMiniStar } from "react-icons/hi2";
 import axios from 'axios';
+import toast from "react-hot-toast";
 
 interface User {
   id: number;
@@ -58,6 +59,12 @@ const Dashboard = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { rideId } = router.query;
+
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: process.env.API_KEY ?? "",
+    libraries: ["geometry", "drawing"],
+  });
 
   const onMarkerClick = (ride: Ride) => {
     setSelectedRide(ride);
@@ -469,8 +476,7 @@ const Dashboard = () => {
     );
   };
 
-  return session ? (
-    <LoadScript googleMapsApiKey={process.env.API_KEY || ""}>
+  return session && isLoaded ? (
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={defaultCenter}
@@ -560,7 +566,6 @@ const Dashboard = () => {
           </div>
         )}
       </GoogleMap>
-    </LoadScript>
   ) : (
     <div>Loading...</div>
   );

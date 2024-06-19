@@ -4,14 +4,14 @@ import axios from "axios";
 import useSWR from "swr";
 import {
   GoogleMap,
-  LoadScript,
   Marker,
   DirectionsRenderer,
+  useJsApiLoader,
 } from "@react-google-maps/api";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { Spinner } from "@/components/Spinner";
-import { debug } from "console";
+import toast from "react-hot-toast";
 
 const mapContainerStyle = {
   width: "100%",
@@ -96,6 +96,11 @@ const RidePage = () => {
     fetcher
   );
 
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: process.env.API_KEY ?? "",
+    libraries: ["geometry", "drawing"],
+  });
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -136,6 +141,7 @@ const RidePage = () => {
   const [extraCharges, setExtraCharges] = useState(0);
   const [initialPeriodPassed, setInitialPeriodPassed] = useState(false);
   const [isOpeningMaps, setIsOpeningMaps] = useState(false);
+  const [loading, setLoading] = useState(false);
 
 
   useEffect(() => {
@@ -294,6 +300,9 @@ const RidePage = () => {
         }
       }
 
+      setLoading(true);
+      const loadingToastId = toast.loading("Processing...");
+
       try {
         await axios.patch(`/api/rides/${rideId}`, {
           status: "InProgress",
@@ -309,8 +318,12 @@ const RidePage = () => {
 
         // Start the timer
         setTimerActive(true);
+        toast.success("Arrived at customer location!", { id: loadingToastId });
       } catch (error) {
         console.error("Error updating ride status:", error);
+        toast.error("Failed to update ride status", { id: loadingToastId });
+      } finally {
+        setLoading(false);
       }
     }
     setIsPickedUp(true);
@@ -318,15 +331,17 @@ const RidePage = () => {
 
   const handleRideComplete = async () => {
     if (rideDetails) {
-      try {
-        setIsCompletingRide(true);
+      setIsCompletingRide(true);
+      const loadingToastId = toast.loading("Processing...");
 
+      try {
         await axios.patch(`/api/rides/${rideId}`, {
           status: "Completed",
           dropoffTime: new Date(),
           driverId: session?.user.id,
         });
-        alert("Ride completed successfully!");
+        
+        toast.success("Ride completed successfully!", { id: loadingToastId });
 
         // Clear isPickedUp from localStorage
         localStorage.removeItem(`isPickedUp_${rideId}`);
@@ -334,7 +349,7 @@ const RidePage = () => {
         router.push("/dashboard");
       } catch (error) {
         console.error("Error completing the ride:", error);
-        alert("Failed to complete the ride.");
+        toast.error("Failed to complete the ride.", { id: loadingToastId });
       } finally {
         setIsCompletingRide(false);
       }
@@ -407,8 +422,10 @@ const RidePage = () => {
 
   
   const openInMaps = async () => {
-    if (rideDetails && rideDetails.pickupLocation && rideDetails.dropoffLocation) {
+    if (rideDetails?.pickupLocation && rideDetails.dropoffLocation) {
       setIsOpeningMaps(true);
+      const loadingToastId = toast.loading("Processing...");
+
       const baseMapsUrl = 'https://www.google.com/maps/dir/?api=1';
       let waypoints = '';
       
@@ -438,12 +455,15 @@ const RidePage = () => {
         }
 
         window.open(url, "_blank");
+        toast.success("Maps opened successfully!", { id: loadingToastId });
       } catch (error) {
         console.error("Error fetching coordinates:", error);
-        alert("Failed to get location coordinates.");
+        toast.error("Failed to get location coordinates.", { id: loadingToastId });
       } finally {
         setIsOpeningMaps(false);
       }
+    }else {
+      toast.error("Pickup and dropoff locations are required.");
     }
   };
 
@@ -492,20 +512,28 @@ const RidePage = () => {
     <div>
       {rideDetails && (
         <>
-          <LoadScript googleMapsApiKey={process.env.API_KEY || ""}>
+          {isLoaded && (
             <GoogleMap
               mapContainerStyle={mapContainerStyle}
-              center={isPickedUp ? dropoffLocation || { lat: 0, lng: 0 } : pickupLocation || { lat: 0, lng: 0 }}
+              center={
+                isPickedUp
+                  ? dropoffLocation || { lat: 0, lng: 0 }
+                  : pickupLocation || { lat: 0, lng: 0 }
+              }
               zoom={12}
               onLoad={onMapLoad}
               options={mapOptions}
             >
               <Marker position={driverLocation} label="Driver" />
-              {!isPickedUp && pickupLocation && <Marker position={pickupLocation} label="Pickup" />}
-              {isPickedUp && dropoffLocation && <Marker position={dropoffLocation} label="Dropoff" />}
+              {!isPickedUp && pickupLocation && (
+                <Marker position={pickupLocation} label="Pickup" />
+              )}
+              {isPickedUp && dropoffLocation && (
+                <Marker position={dropoffLocation} label="Dropoff" />
+              )}
               {directions && <DirectionsRenderer directions={directions} />}
             </GoogleMap>
-          </LoadScript>
+          )}
           <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-lg rounded-t-lg p-4">
             <div className="flex items-center justify-between mb-4">
               {rideDetails.user ? (
@@ -557,8 +585,9 @@ const RidePage = () => {
                 <button
                   onClick={handlePickedUp}
                   className="px-4 py-2 bg-black text-white rounded-md mr-4"
+                  disabled={loading}
                 >
-                  Arrived
+                  {loading ? "Processing..." : "Arrived"}
                 </button>
               ) : (
                 <button
@@ -566,7 +595,7 @@ const RidePage = () => {
                   className="px-4 py-2 bg-black text-white rounded-md mr-4"
                   disabled={isCompletingRide}
                 >
-                  {isCompletingRide ? (<Spinner />) : ("Complete Ride")}
+                  {isCompletingRide ? "Processing..." : "Complete Ride"}
                 </button>
               )}
 
@@ -575,7 +604,7 @@ const RidePage = () => {
                 className="px-4 py-2 bg-black text-white rounded-md"
                 disabled={isOpeningMaps}
               >
-                {isOpeningMaps ? (<Spinner />) : ("Open in Maps")}
+                {isOpeningMaps ? "Processing" : "Open in Maps"}
               </button>
             </div>
           </div>

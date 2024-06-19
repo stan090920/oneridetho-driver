@@ -170,12 +170,6 @@ const Task = () => {
 
   const paymentToOneRideTho = totalEarnings ? totalEarnings * 0.3 : 0;
 
-  const isTimeToAccept = (scheduledTime: string): boolean => {
-    const currentTime = new Date();
-    const scheduledPickupTime = new Date(scheduledTime);
-    return currentTime >= scheduledPickupTime;
-  };
-
     
   const reverseGeocode = async (lat: number, lng: number): Promise<string> =>  {
     try {
