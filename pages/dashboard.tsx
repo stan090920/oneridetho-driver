@@ -4,11 +4,13 @@ import {
   InfoWindow,
   Marker,
   useJsApiLoader,
+  DirectionsService,
+  DirectionsRenderer,
 } from "@react-google-maps/api";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HiMiniStar } from "react-icons/hi2";
 import axios from 'axios';
 import toast from "react-hot-toast";
@@ -32,6 +34,31 @@ interface Ride {
   stops: Stop[];
   scheduledPickupTime: string;
 }
+interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
+interface Stop {
+  address: string;
+  lat: number;
+  lng: number;
+}
+
+interface SimpleMapProps {
+  pickupCoordinates: Coordinates | null;
+  dropoffCoordinates: Coordinates | null;
+  stops: Coordinates[];
+}
+
+const directionsRendererOptions = {
+  polylineOptions: {
+    strokeColor: "#FF0000",
+    strokeOpacity: 0.8,
+    strokeWeight: 5,
+  },
+};
+  
 
 const containerStyle = {
   width: "100%",
@@ -42,6 +69,66 @@ const defaultCenter = {
   lat: 25.06,
   lng: -77.345,
 };
+
+function Directions({ pickupCoordinates, dropoffCoordinates, stops }: Readonly<SimpleMapProps>) {
+  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
+  const count = useRef(0);
+
+  useEffect(() => {
+    setDirections(null);
+    count.current = 0;
+  }, [pickupCoordinates, dropoffCoordinates, stops]);
+
+  const directionsCallback = (
+    result: google.maps.DirectionsResult | null,
+    status: google.maps.DirectionsStatus
+  ) => {
+    if (status === "OK" && count.current === 0) {
+      count.current += 1;
+      setDirections(result);
+    }
+  };
+
+  return (
+    <>
+      {pickupCoordinates && dropoffCoordinates && (
+        <DirectionsService
+          options={{
+            origin: { lat: pickupCoordinates.lat, lng: pickupCoordinates.lng },
+            destination: {
+              lat: dropoffCoordinates.lat,
+              lng: dropoffCoordinates.lng,
+            },
+            waypoints: stops.map((stop) => ({
+              location: new google.maps.LatLng(stop.lat, stop.lng),
+              stopover: true,
+            })),
+            optimizeWaypoints: true,
+            travelMode: google.maps.TravelMode.DRIVING,
+          }}
+          callback={directionsCallback}
+        />
+      )}
+      {directions && <DirectionsRenderer directions={directions} options={directionsRendererOptions} />}
+    </>
+  );
+}
+
+function parseStops(stops: Stop[] | string | undefined): Coordinates[] {
+  if (!stops) return [];
+
+  try {
+    if (typeof stops === "string") {
+      const parsedStops = JSON.parse(stops) as Stop[];
+      return parsedStops.map((stop) => ({ lat: stop.lat, lng: stop.lng }));
+    } else {
+      return stops.map((stop) => ({ lat: stop.lat, lng: stop.lng }));
+    }
+  } catch (e) {
+    console.error("Error parsing stops data:", e);
+    return [];
+  }
+}
 
 
 const Dashboard = () => {
@@ -410,13 +497,10 @@ const Dashboard = () => {
         let ridesData = await response.json();
 
         for (let ride of ridesData) {
-          if (isTextualAddress(ride.pickupLocation)) {
-            const coordinates = await getCoordinates(ride.pickupLocation);
-            ride.pickupLocation = coordinates;
-          } else {
-            const [lat, lng] = ride.pickupLocation.split(",").map(Number);
-            ride.pickupLocation = { lat, lng };
-          }
+          ride.pickupLocation = JSON.parse(ride.pickupLocation);
+          ride.dropoffLocation = JSON.parse(ride.dropoffLocation);
+
+          console.log("Pickup location:", ride.pickupLocation);
         }
 
         setRides(ridesData);
@@ -476,86 +560,108 @@ const Dashboard = () => {
     );
   };
 
-  return session && isLoaded ? (
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={defaultCenter}
-        zoom={13}
-        options={mapOptions}
-      >
-        {rides.map((ride) => {
-          return (
-            <Marker
-              key={ride.id}
-              position={ride.pickupLocation}
-              onClick={() => onMarkerClick(ride)}
-            />
-          );
-        })}
+  let parsedPickupLocation;
+  let parsedDropoffLocation;
 
-        {inProgressRides.map((ride) => (
-          <div key={ride.id} className="absolute bottom-0 bg-white w-full h-[20vh] pt-4 pb-2 rounded-t-[16px]">
-            <a href={`/ride/${ride.id}`}>
-              <div className="text-center">Go Back to Ride</div>
-              <div className="px-2 mt-2">
-                <li>{ride.pickupLocation}</li>
-                <div className="border-l-2 h-5 border-black"></div>
-                <li>{ride.dropoffLocation}</li>
-              </div>
-            </a>
-          </div>
+  if (selectedRide) {
+    parsedPickupLocation = JSON.parse(selectedRide.pickupLocation);
+    parsedDropoffLocation = JSON.parse(selectedRide.dropoffLocation);
+  }
+
+
+  return session && isLoaded ? (
+    <GoogleMap
+      mapContainerStyle={containerStyle}
+      center={defaultCenter}
+      zoom={13}
+      options={mapOptions}
+    >
+      {!selectedRide &&
+        rides.map((ride) => (
+          <Marker
+            key={ride.id}
+            position={ride.pickupLocation}
+            onClick={() => onMarkerClick(ride)}
+          />
         ))}
 
-        {selectedRide && (
+      {inProgressRides.map((ride) => (
+        <div
+          key={ride.id}
+          className="absolute bottom-0 bg-white w-full h-[20vh] pt-4 pb-2 rounded-t-[16px]"
+        >
+          <a href={`/ride/${ride.id}`}>
+            <div className="text-center">Go Back to Ride</div>
+            <div className="px-2 mt-2">
+              <li>{JSON.parse(ride.pickupLocation)}</li>
+              <div className="border-l-2 h-5 border-black"></div>
+              <li>{JSON.parse(ride.dropoffLocation)}</li>
+            </div>
+          </a>
+        </div>
+      ))}
+
+      {selectedRide && (
+        <>
+          <Marker position={selectedRide.pickupLocation} />
+          <Marker position={selectedRide.dropoffLocation} />
+          <Directions
+            pickupCoordinates={parsedPickupLocation}
+            dropoffCoordinates={parsedDropoffLocation}
+            stops={selectedRide.stops ? parseStops(selectedRide.stops) : []}
+          />
+
           <div className="absolute bottom-0 bg-white w-full h-[30vh] pt-4 pb-2 rounded-t-[16px] overflow-y-scroll">
-            {(() => {
-              let stops;
-              if (typeof selectedRide.stops === "string") {
-                try {
-                  stops = JSON.parse(selectedRide.stops);
-                } catch (e) {
-                  console.error("Error parsing stops data:", e);
-                  stops = [];
-                }
-              } else {
-                stops = selectedRide.stops;
-              }
-
-              return (
-                <>
-                  {Array.isArray(stops) && stops.length > 0 && (
-                    <div className="text-center">
-                      Ride has {stops.length} stop{stops.length > 1 ? "s" : ""}
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-
             {showSchedulePopup && renderSchedulePopup()}
 
-            <div className="text-center">
-              <button
-                onClick={() => acceptRide(selectedRide.id)}
-                className="rounded-full bg-black text-white py-3 pl-10 pr-10 text-center flashing-border"
-              >
-                {loadingRideId === selectedRide.id ? (
-                  <Spinner />
-                ) : (
-                  selectedRide.user.name
-                )}
-              </button>
-
-              <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-between gap-4 px-4">
+              <div className="flex items-center gap-2">
                 <div className="font-bold text-[24px]">
                   ${selectedRide.fare}
                 </div>
                 {selectedRide.paymentMethod === "Card" && (
-                  <span className="text-[20px] rounded-full border-2 border-black  pl-3 pr-3">
+                  <span className="text-[20px] rounded-full border-2 border-black pl-3 pr-3">
                     💳 Paid
                   </span>
                 )}
               </div>
+
+              <button
+                onClick={() => acceptRide(selectedRide.id)}
+                className="rounded-full bg-black text-white py-3 px-10 text-center flashing-border"
+              >
+                {loadingRideId === selectedRide.id ? (
+                  <Spinner />
+                ) : (
+                  selectedRide.user.name.split(" ")[0]
+                )}
+              </button>
+
+              {(() => {
+                let stops;
+                if (typeof selectedRide.stops === "string") {
+                  try {
+                    stops = JSON.parse(selectedRide.stops);
+                  } catch (e) {
+                    console.error("Error parsing stops data:", e);
+                    stops = [];
+                  }
+                } else {
+                  stops = selectedRide.stops;
+                }
+
+                return (
+                  <div className="text-center">
+                    {Array.isArray(stops) && stops.length > 0 ? (
+                      <div className="font-medium">
+                        {stops.length} stop{stops.length > 1 ? "s" : ""}
+                      </div>
+                    ) : (
+                      <div className="font-medium">0 stops</div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="px-2 mt-2">
@@ -564,8 +670,9 @@ const Dashboard = () => {
               <li>{dropoffAddress}</li>
             </div>
           </div>
-        )}
-      </GoogleMap>
+        </>
+      )}
+    </GoogleMap>
   ) : (
     <div>Loading...</div>
   );

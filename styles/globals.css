@@ -72,3 +72,15 @@ body{
     margin: auto;
   }
   
+  /* Disable hover effects for touch devices */
+.is-touch button:hover,
+.is-touch a:hover,
+.is-touch div:hover,
+.is-touch span:hover {
+  background-color: inherit !important;
+  color: inherit !important;
+  border: inherit !important;
+  cursor: inherit !important;
+  text-decoration: none !important;
+  outline: none !important;
+}

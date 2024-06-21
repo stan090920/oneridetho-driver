@@ -7,6 +7,7 @@ import {
   Marker,
   DirectionsRenderer,
   useJsApiLoader,
+  Polyline,
 } from "@react-google-maps/api";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -82,7 +83,7 @@ const RidePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCompletingRide, setIsCompletingRide] = useState(false);
   const [error, setError] = useState("");
-  const [directions, setDirections] = useState(null);
+  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [driverLocation, setDriverLocation] = useState({ lat: 0, lng: 0 });
   const [pickupLocation, setPickupLocation] = useState<Location | null>(null);
   const [eta, setEta] = useState("");
@@ -95,6 +96,20 @@ const RidePage = () => {
     rideId ? `/api/rides/${rideId}` : null,
     fetcher
   );
+
+  useEffect(() => {
+    // Add a class to the body to indicate touch support
+    const handleTouchStart = () => {
+      document.body.classList.add("is-touch");
+      window.removeEventListener("touchstart", handleTouchStart);
+    };
+
+    window.addEventListener("touchstart", handleTouchStart);
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+    };
+  }, []);
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -395,20 +410,24 @@ const RidePage = () => {
       if (!destination) return;
 
       const directionsService = new google.maps.DirectionsService();
-
+      const waypoints = rideDetails?.stops?.map(stop => ({
+        location: new google.maps.LatLng(stop.lat, stop.lng),
+        stopover: true,
+      }));
       directionsService.route(
         {
           origin: driverLocation,
           destination: destination,
           travelMode: google.maps.TravelMode.DRIVING,
+          waypoints: waypoints || [],
         },
         (result, status) => {
-          if (status === google.maps.DirectionsStatus.OK) {
-            //@ts-ignore
+          if (status === google.maps.DirectionsStatus.OK && result) {
             setDirections(result);
-            //@ts-ignore
-            const duration = result.routes[0].legs[0].duration.text;
-            setEta(duration);
+            if (result.routes && result.routes[0] && result.routes[0].legs && result.routes[0].legs[0]) {
+              const duration = result.routes[0]?.legs[0]?.duration?.text;
+              setEta(duration ?? "");
+            }
           } else {
             console.error(`Error fetching directions: ${status}`);
           }
@@ -418,7 +437,8 @@ const RidePage = () => {
 
     const intervalId = setInterval(updateDirections, 0); // Update directions every frame
     return () => clearInterval(intervalId);
-  }, [driverLocation, pickupLocation, dropoffLocation, isPickedUp]);
+  }, [driverLocation, pickupLocation, dropoffLocation, isPickedUp, rideDetails]);
+
 
   
   const openInMaps = async () => {
@@ -507,6 +527,14 @@ const RidePage = () => {
   if (isLoading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
 
+  let stops = [];
+  if (rideDetails?.stops) {
+    try {
+      stops = Array.isArray(rideDetails.stops) ? rideDetails.stops : JSON.parse(rideDetails.stops);
+    } catch (error) {
+      console.error("Error parsing stops:", error);
+    }
+  }
 
   return (
     <div>
@@ -531,6 +559,15 @@ const RidePage = () => {
               {isPickedUp && dropoffLocation && (
                 <Marker position={dropoffLocation} label="Dropoff" />
               )}
+              {stops?.map((stop: { lat: number, lng: number }, index: number) => (
+                <Marker
+                  key={index}
+                  position={{ lat: stop.lat, lng: stop.lng }}
+                  icon={{
+                    url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                  }}
+                />
+              ))}
               {directions && <DirectionsRenderer directions={directions} />}
             </GoogleMap>
           )}
