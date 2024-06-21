@@ -74,6 +74,10 @@ function Directions({ pickupCoordinates, dropoffCoordinates, stops }: Readonly<S
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const count = useRef(0);
 
+  // console.log("Pickup Coordinates: ", pickupCoordinates);
+  // console.log("Dropoff Coordinates: ", dropoffCoordinates);
+  // console.log("Stops: ", stops);
+
   useEffect(() => {
     setDirections(null);
     count.current = 0;
@@ -420,19 +424,19 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchAndSetAddress = async () => {
       if (selectedRide?.pickupLocation) {
-        let address; 
+        let address = ""; 
 
-        if (!isCoordinateFormat(selectedRide.pickupLocation)) {
+        if (typeof selectedRide.pickupLocation === "string") {
           const pickupLoc = JSON.parse(selectedRide.pickupLocation);
+          address = await reverseGeocode(pickupLoc.lat, pickupLoc.lng);
+        } else{
           address = await reverseGeocode(
-            pickupLoc.lat,
-            pickupLoc.lng
+            selectedRide.pickupLocation.lat,
+            selectedRide.pickupLocation.lng
           );
-        } else {
-          address = selectedRide.pickupLocation;
         }
 
-        setPickupAddress(address);
+        setPickupAddress(typeof address === 'object' ? JSON.stringify(address) : address);
       }
     };
 
@@ -440,28 +444,21 @@ const Dashboard = () => {
   }, [selectedRide]);
 
   useEffect(() => {
-    const fetchAddress = async (lat: number, lng: number) => {
-      try {
-        const response = await fetch(`/api/reversegeo?lat=${lat}&lng=${lng}`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch address: ${response.status}`);
-        }
-        const data = await response.json();
-        return data.address;
-      } catch (error) {
-        console.error("Error fetching address:", error);
-        return "Address not found";
-      }
-    };
-
     const setAddress = async () => {
       if (selectedRide?.dropoffLocation) {
-        const dropoffLoc = JSON.parse(selectedRide.dropoffLocation);
-        const dropoffAddress = await reverseGeocode(
-          dropoffLoc.lat,
-          dropoffLoc.lng
-        );
-        setDropoffAddress(dropoffAddress);
+        let dropoffAddress = "";
+
+        if (typeof selectedRide.dropoffLocation === "string"){
+          const dropoffLoc = JSON.parse(selectedRide.dropoffLocation);
+          dropoffAddress = await reverseGeocode(dropoffLoc.lat, dropoffLoc.lng);
+        } else{
+          dropoffAddress = await reverseGeocode(
+            selectedRide.dropoffLocation.lat,
+            selectedRide.dropoffLocation.lng
+          );
+        }
+          
+        setDropoffAddress(typeof dropoffAddress === 'object' ? JSON.stringify(dropoffAddress) : dropoffAddress);
       }
     };
 
@@ -499,8 +496,6 @@ const Dashboard = () => {
         for (let ride of ridesData) {
           ride.pickupLocation = JSON.parse(ride.pickupLocation);
           ride.dropoffLocation = JSON.parse(ride.dropoffLocation);
-
-          console.log("Pickup location:", ride.pickupLocation);
         }
 
         setRides(ridesData);
@@ -567,6 +562,9 @@ const Dashboard = () => {
   if (selectedRide && typeof selectedRide.dropoffLocation === "string") {
     parsedPickupLocation = JSON.parse(selectedRide.pickupLocation);
     parsedDropoffLocation = JSON.parse(selectedRide.dropoffLocation);
+  } else {
+    parsedPickupLocation = selectedRide?.pickupLocation;
+    parsedDropoffLocation = selectedRide?.dropoffLocation;
   }
 
 
@@ -666,9 +664,17 @@ const Dashboard = () => {
             </div>
 
             <div className="px-2 mt-2">
-              <li>{pickupAddress}</li>
+              <p>
+                {typeof pickupAddress === "object"
+                  ? JSON.stringify(pickupAddress)
+                  : pickupAddress || "Loading..."}
+              </p>
               <div className="border-l-2 h-5 border-black"></div>
-              <li>{dropoffAddress}</li>
+              <p>
+                {typeof dropoffAddress === "object"
+                  ? JSON.stringify(dropoffAddress)
+                  : dropoffAddress || "Loading"}
+              </p>
             </div>
           </div>
         </>
