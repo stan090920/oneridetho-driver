@@ -572,19 +572,21 @@ const RidePage = () => {
               {isPickedUp && dropoffLocation && (
                 <Marker position={dropoffLocation} label="Dropoff" />
               )}
-              {stops?.map((stop: { lat: number, lng: number }, index: number) => (
-                <Marker
-                  key={index}
-                  position={{ lat: stop.lat, lng: stop.lng }}
-                  icon={{
-                    url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-                  }}
-                />
-              ))}
+              {stops?.map(
+                (stop: { lat: number; lng: number }, index: number) => (
+                  <Marker
+                    key={index}
+                    position={{ lat: stop.lat, lng: stop.lng }}
+                    icon={{
+                      url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                    }}
+                  />
+                )
+              )}
               {directions && <DirectionsRenderer directions={directions} />}
             </GoogleMap>
           )}
-          <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-lg rounded-t-lg p-4">
+          <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-lg rounded-t-lg p-4 z-50">
             <div className="flex items-center justify-between mb-4">
               {rideDetails.user ? (
                 <div className="flex items-center">
