@@ -560,10 +560,11 @@ const Dashboard = () => {
     );
   };
 
+
   let parsedPickupLocation;
   let parsedDropoffLocation;
 
-  if (selectedRide) {
+  if (selectedRide && typeof selectedRide.dropoffLocation === "string") {
     parsedPickupLocation = JSON.parse(selectedRide.pickupLocation);
     parsedDropoffLocation = JSON.parse(selectedRide.dropoffLocation);
   }
