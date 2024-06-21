@@ -403,41 +403,54 @@ const RidePage = () => {
   }, [rideId, router]);
 
   useEffect(() => {
-    const updateDirections = () => {
-      if (!mapRef.current || !driverLocation || !(pickupLocation || dropoffLocation)) return;
+  const updateDirections = () => {
+    if (!mapRef.current || !driverLocation || !(pickupLocation || dropoffLocation)) return;
 
-      const destination = isPickedUp ? dropoffLocation : pickupLocation;
-      if (!destination) return;
+    const destination = isPickedUp ? dropoffLocation : pickupLocation;
+    if (!destination) return;
 
-      const directionsService = new google.maps.DirectionsService();
-      const waypoints = rideDetails?.stops?.map(stop => ({
-        location: new google.maps.LatLng(stop.lat, stop.lng),
-        stopover: true,
-      }));
-      directionsService.route(
-        {
-          origin: driverLocation,
-          destination: destination,
-          travelMode: google.maps.TravelMode.DRIVING,
-          waypoints: waypoints || [],
-        },
-        (result, status) => {
-          if (status === google.maps.DirectionsStatus.OK && result) {
-            setDirections(result);
-            if (result.routes && result.routes[0] && result.routes[0].legs && result.routes[0].legs[0]) {
-              const duration = result.routes[0]?.legs[0]?.duration?.text;
-              setEta(duration ?? "");
-            }
-          } else {
-            console.error(`Error fetching directions: ${status}`);
+    let stops = [];
+    if (rideDetails?.stops) {
+      try {
+        stops = Array.isArray(rideDetails.stops)
+          ? rideDetails.stops
+          : JSON.parse(rideDetails.stops);
+      } catch (error) {
+        console.error("Error parsing stops:", error);
+      }
+    }
+
+    const waypoints = stops.length > 0 ? stops.map((stop: { lat: number, lng: number }) => ({
+      location: new google.maps.LatLng(stop.lat, stop.lng),
+      stopover: true,
+    })) : [];
+
+    const directionsService = new google.maps.DirectionsService();
+    directionsService.route(
+      {
+        origin: driverLocation,
+        destination: destination,
+        travelMode: google.maps.TravelMode.DRIVING,
+        waypoints: waypoints,
+      },
+      (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          setDirections(result);
+          if (result.routes && result.routes[0] && result.routes[0].legs && result.routes[0].legs[0]) {
+            const duration = result.routes[0]?.legs[0]?.duration?.text;
+            setEta(duration ?? "");
           }
+        } else {
+          console.error(`Error fetching directions: ${status}`);
         }
-      );
-    };
+      }
+    );
+  };
 
-    const intervalId = setInterval(updateDirections, 0); // Update directions every frame
-    return () => clearInterval(intervalId);
-  }, [driverLocation, pickupLocation, dropoffLocation, isPickedUp, rideDetails]);
+  const intervalId = setInterval(updateDirections, 0); // Update directions every frame
+  return () => clearInterval(intervalId);
+}, [driverLocation, pickupLocation, dropoffLocation, isPickedUp, rideDetails]);
+
 
 
   
