@@ -10,17 +10,22 @@ export default async function handler(
   if (req.method === 'GET') {
     try {
       const unacceptedRides = await prisma.ride.findMany({
-        where: { isAccepted: false },
-        include: { 
+        where: {
+          isAccepted: false,
+          status: {
+            not: "Cancelled",
+          },
+        },
+        include: {
           user: {
             select: {
               id: true,
               name: true,
               rating: true,
-              phone: true
-            }
-          }
-        }
+              phone: true,
+            },
+          },
+        },
       });
 
       res.status(200).json(unacceptedRides);
