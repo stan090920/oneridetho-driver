@@ -7,16 +7,22 @@ const prisma = new PrismaClient();
 const twilioClient = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 function formatTime(date: any) {
-  if (!date) return '';
+  if (!date) return "";
 
   const d = new Date(date);
-  return d.toLocaleString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric', 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    hour12: true 
+  // Get the local timezone offset in minutes and convert to milliseconds
+  const timezoneOffset = d.getTimezoneOffset() * 60000;
+
+  // Adjust the date to the local timezone
+  const localDate = new Date(d.getTime() - timezoneOffset);
+
+  return localDate.toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   });
 }
 
