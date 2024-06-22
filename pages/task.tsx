@@ -65,7 +65,7 @@ const Task = () => {
       minute: "numeric",
       hour12: true,
     };
-    return new Intl.DateTimeFormat("en-US", options).format(dateTime);
+    return dateTime.toLocaleString('en-US', options);
   };
 
   // Function to fetch rides data
