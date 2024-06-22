@@ -56,7 +56,7 @@ const Task = () => {
   >("requested");
 
   const formatDate = (dateString: string): string => {
-    const dateTime = new Date(dateString);
+    const dateTime = new Date(Date.parse(dateString));
     const options: Intl.DateTimeFormatOptions = {
       year: "numeric",
       month: "long",

@@ -288,7 +288,7 @@ const RidePage = () => {
       // Check if the ride is a scheduled ride and if it's too early to pick up
       if (rideDetails.status == "Scheduled") {
         if (rideDetails.pickupTime){
-          const scheduledTime = new Date(rideDetails.pickupTime).getTime();
+          const scheduledTime = new Date(Date.parse(rideDetails.pickupTime)).getTime();
           console.log("Pickup time: " + scheduledTime);
 
           const currentTime = new Date().getTime();
