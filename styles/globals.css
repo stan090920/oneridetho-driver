@@ -75,7 +75,6 @@ body{
   /* Disable hover effects for touch devices */
 .is-touch button:hover,
 .is-touch a:hover,
-.is-touch div:hover,
 .is-touch span:hover {
   cursor: inherit !important;
   text-decoration: none !important;
