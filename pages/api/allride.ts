@@ -15,6 +15,7 @@ export default async function handler(
           status: true,
           pickupLocation: true,
           dropoffLocation: true,
+          passengerCount: true,
           scheduledPickupTime: true,
           isAccepted: true,
           driverId: true,

@@ -1,42 +1,44 @@
-import { PrismaClient } from '@prisma/client';
-import { Twilio } from 'twilio';
-import type { NextApiRequest, NextApiResponse } from 'next';
-import sendEmail from '../../../../lib/emailServer';
+import { PrismaClient } from "@prisma/client";
+import { Twilio } from "twilio";
+import type { NextApiRequest, NextApiResponse } from "next";
+import sendEmail from "../../../../lib/emailServer";
 
 const prisma = new PrismaClient();
-const twilioClient = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const twilioClient = new Twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
 
 function formatTime(date: any) {
   if (!date) return "";
-
-  const d = new Date(date);
-  // Get the local timezone offset in minutes and convert to milliseconds
-  const timezoneOffset = d.getTimezoneOffset() * 60000;
-
-  // Adjust the date to the local timezone
-  const localDate = new Date(d.getTime() - timezoneOffset);
-
-  return localDate.toLocaleString("en-US", {
+  const dateTime = new Date(Date.parse(date));
+  const options: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "long",
     day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+    hour: "numeric",
+    minute: "numeric",
     hour12: true,
-  });
+  };
+  return dateTime.toLocaleString("en-US", options);
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    const rideIdStr = typeof req.query.rideId === 'string' ? req.query.rideId : null;
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method === "POST") {
+    const rideIdStr =
+      typeof req.query.rideId === "string" ? req.query.rideId : null;
     if (!rideIdStr) {
-      return res.status(400).json({ message: 'Invalid ride ID' });
+      return res.status(400).json({ message: "Invalid ride ID" });
     }
     const rideId = parseInt(rideIdStr);
 
-    const driverId = typeof req.body.driverId === 'number' ? req.body.driverId : null;
+    const driverId =
+      typeof req.body.driverId === "number" ? req.body.driverId : null;
     if (driverId === null) {
-      return res.status(400).json({ message: 'Invalid driver ID' });
+      return res.status(400).json({ message: "Invalid driver ID" });
     }
 
     try {
@@ -46,9 +48,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (ride?.isAccepted) {
         if (ride?.driverId === driverId) {
-          return res.status(200).json({ message: 'You already accepted this ride' });
+          return res
+            .status(200)
+            .json({ message: "You already accepted this ride" });
         } else {
-          return res.status(400).json({ message: 'Ride already accepted by another driver' });
+          return res
+            .status(400)
+            .json({ message: "Ride already accepted by another driver" });
         }
       }
 
@@ -56,18 +62,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { id: rideId },
         data: {
           isAccepted: true,
-          driverId: driverId
+          driverId: driverId,
         },
         include: {
           driver: true,
-          user: true
-        }
+          user: true,
+        },
       });
 
       if (updatedRide.driver && updatedRide.user?.email) {
-        let subject: string = '';
-        let text: string = '';
-        let html: string = '';
+        let subject: string = "";
+        let text: string = "";
+        let html: string = "";
 
         if (updatedRide.isScheduled && updatedRide.scheduledPickupTime) {
           const formattedTime = formatTime(updatedRide.scheduledPickupTime);
@@ -88,7 +94,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
 
-
       if (updatedRide.driver && updatedRide.user?.phone) {
         let bodyMessage;
         if (updatedRide.isScheduled && updatedRide.scheduledPickupTime) {
@@ -98,20 +103,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           bodyMessage = `Great news! Your ride with ${updatedRide.driver.name} has been confirmed. Your driver will be in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. For more details about your ride, visit: https://www.oneridetho.com/rides/${updatedRide.id}\n\nWe wish you a safe and pleasant journey!`;
         }
 
-        await twilioClient.messages.create({
-          body: bodyMessage,
-          from: process.env.TWILIO_PHONE_NUMBER,
-          to: updatedRide.user.phone
-        });
+        try {
+          await twilioClient.messages.create({
+            body: bodyMessage,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: updatedRide.user.phone,
+          });
+        } catch (twilioError) {
+          console.error("Error sending text message:", twilioError);
+          // Continue without failing
+        }
       }
 
-      res.status(200).json({ message: 'Ride accepted successfully', updatedRide });
+      res
+        .status(200)
+        .json({ message: "Ride accepted successfully", updatedRide });
     } catch (error) {
-      console.error('Error accepting the ride:', error);
-      res.status(500).json({ message: 'Error accepting the ride' });
+      console.error("Error accepting the ride:", error);
+      res.status(500).json({ message: "Error accepting the ride" });
     }
   } else {
-    res.setHeader('Allow', ['POST']);
+    res.setHeader("Allow", ["POST"]);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }

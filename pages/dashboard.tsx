@@ -10,7 +10,7 @@ import {
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { HiMiniStar } from "react-icons/hi2";
 import axios from 'axios';
 import toast from "react-hot-toast";
@@ -25,8 +25,10 @@ interface User {
 
 interface Ride {
   id: number;
+  status: string;
   pickupLocation: any;
   dropoffLocation: any;
+  passengerCount: number;
   fare: number;
   user: User;
   paymentMethod: string;
@@ -145,6 +147,9 @@ const Dashboard = () => {
   const [showSchedulePopup, setShowSchedulePopup] = useState(false);
   const [scheduledPickupTime, setScheduledPickupTime] = useState("");
   const [inProgressRides, setInProgressRides] = useState<Ride[]>([]);
+  const [driverLocation, setDriverLocation] = useState({ lat: 0, lng: 0 });
+  const [distance, setDistance] = useState<string | null>(null);
+  const [eta, setEta] = useState<string | null>(null);
 
 
   const { data: session, status } = useSession();
@@ -156,6 +161,19 @@ const Dashboard = () => {
     googleMapsApiKey: process.env.API_KEY ?? "",
     libraries: ["geometry", "drawing"],
   });
+
+  const formatDate = (dateString: string): string => {
+    const dateTime = new Date(Date.parse(dateString));
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    };
+    return dateTime.toLocaleString("en-US", options);
+  };
 
   const onMarkerClick = (ride: Ride) => {
     setSelectedRide(ride);
@@ -529,6 +547,99 @@ const Dashboard = () => {
     fetchInProgressRides();
   }, []);
 
+  const updateDriverLocation = useCallback(
+    async (lat: number, lng: number) => {
+      try {
+        const driverId = session?.user.id;
+        await axios.patch("/api/drivers/location", {
+          driverId,
+          location: { lat, lng },
+        });
+        setDriverLocation({ lat, lng });
+      } catch (error) {
+        console.error("Error updating driver location:", error);
+      }
+    },
+    [session?.user.id]
+  );
+
+  useEffect(() => {
+    let watchId: number | undefined;
+    if (navigator.geolocation) {
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          updateDriverLocation(latitude, longitude);
+        },
+        (error) => {
+          console.error("Error watching position:", error);
+        },
+        { enableHighAccuracy: true }
+      );
+    }
+    // Clean up
+    return () => {
+      if (watchId !== undefined) navigator.geolocation.clearWatch(watchId);
+    };
+  }, [updateDriverLocation]);
+
+
+  
+  let parsedPickupLocation;
+  let parsedDropoffLocation;
+
+  if (selectedRide && typeof selectedRide.dropoffLocation === "string") {
+    parsedPickupLocation = JSON.parse(selectedRide.pickupLocation);
+    parsedDropoffLocation = JSON.parse(selectedRide.dropoffLocation);
+  } else {
+    parsedPickupLocation = selectedRide?.pickupLocation;
+    parsedDropoffLocation = selectedRide?.dropoffLocation;
+  }
+
+
+  useEffect(() => {
+    if (selectedRide) {
+      calculateDistanceAndEta();
+    }
+  }, [selectedRide]);
+
+  const calculateDistanceAndEta = () => {
+    const directionsService = new window.google.maps.DirectionsService();
+    const pickupLocation = selectedRide?.pickupLocation;
+
+    if (!pickupLocation) {
+      console.error("Pickup location is not defined");
+      return;
+    }
+
+    directionsService.route(
+      {
+        origin: {
+          lat: driverLocation.lat,
+          lng: driverLocation.lng,
+        },
+        destination: parsedPickupLocation,
+        travelMode: window.google.maps.TravelMode.DRIVING,
+      },
+      (result, status) => {
+        if (
+          status === window.google.maps.DirectionsStatus.OK &&
+          result?.routes[0]?.legs[0]
+        ) {
+          const route = result.routes[0].legs[0];
+          if (route.distance && route.duration) {
+            setDistance(route.distance.text);
+            setEta(route.duration.text);
+          } else {
+            console.error("Distance or duration information is missing");
+          }
+        } else {
+          console.error(`Error fetching directions: ${status}`, result);
+        }
+      }
+    );
+  };
+
   const mapOptions = {
     fullscreenControl: false,
     mapTypeControl: false,
@@ -555,17 +666,6 @@ const Dashboard = () => {
     );
   };
 
-
-  let parsedPickupLocation;
-  let parsedDropoffLocation;
-
-  if (selectedRide && typeof selectedRide.dropoffLocation === "string") {
-    parsedPickupLocation = JSON.parse(selectedRide.pickupLocation);
-    parsedDropoffLocation = JSON.parse(selectedRide.dropoffLocation);
-  } else {
-    parsedPickupLocation = selectedRide?.pickupLocation;
-    parsedDropoffLocation = selectedRide?.dropoffLocation;
-  }
 
 
   return session && isLoaded ? (
@@ -610,6 +710,12 @@ const Dashboard = () => {
             stops={selectedRide.stops ? parseStops(selectedRide.stops) : []}
           />
 
+          {distance && eta && (
+            <div className="absolute top-0 left-0 bg-white p-4 rounded-b-[16px] shadow-md w-full text-center">
+              <p>{`${distance}, ${eta} from Pickup`}</p>
+            </div>
+          )}
+
           <div className="absolute bottom-0 bg-white w-full h-[30vh] pt-4 pb-2 rounded-t-[16px] overflow-y-scroll">
             {showSchedulePopup && renderSchedulePopup()}
 
@@ -636,31 +742,9 @@ const Dashboard = () => {
                 )}
               </button>
 
-              {(() => {
-                let stops;
-                if (typeof selectedRide.stops === "string") {
-                  try {
-                    stops = JSON.parse(selectedRide.stops);
-                  } catch (e) {
-                    console.error("Error parsing stops data:", e);
-                    stops = [];
-                  }
-                } else {
-                  stops = selectedRide.stops;
-                }
-
-                return (
-                  <div className="text-center">
-                    {Array.isArray(stops) && stops.length > 0 ? (
-                      <div className="font-medium">
-                        {stops.length} stop{stops.length > 1 ? "s" : ""}
-                      </div>
-                    ) : (
-                      <div className="font-medium">0 stops</div>
-                    )}
-                  </div>
-                );
-              })()}
+              <div className="flex items-center gap-2 font-semibold">
+                {selectedRide.passengerCount} Pass
+              </div>
             </div>
 
             <div className="px-2 mt-2">
@@ -669,12 +753,48 @@ const Dashboard = () => {
                   ? JSON.stringify(pickupAddress)
                   : pickupAddress || "Loading..."}
               </p>
-              <div className="border-l-2 h-5 border-black"></div>
+              <div className="border-l-2 h-6 border-black ml-[2px]">
+                {(() => {
+                  let stops;
+                  if (typeof selectedRide.stops === "string") {
+                    try {
+                      stops = JSON.parse(selectedRide.stops);
+                    } catch (e) {
+                      console.error("Error parsing stops data:", e);
+                      stops = [];
+                    }
+                  } else {
+                    stops = selectedRide.stops;
+                  }
+
+                  return (
+                    <div className="ml-2">
+                      {Array.isArray(stops) && stops.length > 0 ? (
+                        <div className="font-medium">
+                          {stops.length} stop{stops.length > 1 ? "s" : ""}
+                        </div>
+                      ) : (
+                        <div className="font-medium">0 stops</div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
               <p>
                 {typeof dropoffAddress === "object"
                   ? JSON.stringify(dropoffAddress)
                   : dropoffAddress || "Loading"}
               </p>
+            </div>
+            {/* Displaying the status and pickup time */}
+            <div className="px-2 mt-2 font-bold text-[18px] text-green-600">
+              {selectedRide.status === "Requested" && <p>Booked</p>}
+              {selectedRide.status === "Scheduled" && (
+                <p>
+                  Scheduled for{" "}
+                  {new Date(selectedRide.scheduledPickupTime).toLocaleString()}
+                </p>
+              )}
             </div>
           </div>
         </>

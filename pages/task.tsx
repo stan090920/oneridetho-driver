@@ -4,12 +4,14 @@ import { FaHistory } from "react-icons/fa";
 import { useSession } from "next-auth/react";
 import router from "next/router";
 import axios from 'axios';
+import toast from "react-hot-toast";
 
 type Ride = {
   id: number;
   status: string;
   pickupLocation: any;
   dropoffLocation: any;
+  passengerCount: number;
   scheduledPickupTime?: string;
   isAccepted: boolean;
   driverId: number;
@@ -37,6 +39,7 @@ const Task = () => {
   const [cancelledRides, setCancelledRides] = useState<Ride[]>([]);
   const { data: session, status } = useSession();
   const [address, setAddress] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -182,6 +185,38 @@ const Task = () => {
     }
   };
 
+  const unacceptRide = async (rideId: number) => {
+    setLoading(true);
+    const loadingToastId = toast.loading("Unaccepting Ride...");
+
+    try {
+      const response = await fetch(`/api/rides/unaccept/${rideId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ rideId }),
+      });
+
+      const responseText = await response.text();
+
+      if (response.ok) {
+        toast.success("Ride Unaccepted!", { id: loadingToastId });
+        router.reload();
+      } else {
+        console.error("Failed to unaccept ride:", responseText);
+        toast.error("Failed to unaccept ride", { id: loadingToastId });
+      }
+    } catch (error) {
+      console.error("Error unaccepting ride:", error);
+      toast.error("Error unaccepting ride", { id: loadingToastId });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
   const RenderRides = (rides: Ride[]) => {
     return rides.length > 0 ? (
       rides.map((ride) => {
@@ -203,9 +238,13 @@ const Task = () => {
               <div>
                 <strong>Dropoff Location:</strong> {ride.dropoffLocation}
               </div>
+              <div>
+                <strong>Passengers:</strong> {ride.passengerCount}
+              </div>
               {ride.scheduledPickupTime && (
                 <div>
-                  <strong>Scheduled Pickup Time:</strong> {formatDate(ride.scheduledPickupTime)}
+                  <strong>Scheduled Pickup Time:</strong>{" "}
+                  {formatDate(ride.scheduledPickupTime)}
                 </div>
               )}
               {ride.fare && (
@@ -214,6 +253,16 @@ const Task = () => {
                 </div>
               )}
             </Link>
+            {(ride.status === "Requested" || ride.status === "Scheduled") &&
+              ride.isAccepted && (
+                <button
+                  onClick={() => unacceptRide(ride.id)}
+                  className="bg-red-500 text-white px-4 py-2 mt-2 rounded"
+                  disabled={loading}
+                >
+                  Unaccept
+                </button>
+              )}
           </li>
         );
       })

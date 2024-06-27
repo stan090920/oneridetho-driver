@@ -572,21 +572,23 @@ const RidePage = () => {
               {isPickedUp && dropoffLocation && (
                 <Marker position={dropoffLocation} label="Dropoff" />
               )}
-              {isPickedUp && stops?.map(
-                (stop: { lat: number; lng: number }, index: number) => (
-                  <Marker
-                    key={index}
-                    position={{ lat: stop.lat, lng: stop.lng }}
-                    icon={{
-                      url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-                    }}
-                  />
-                )
-              )}
+              {isPickedUp &&
+                stops?.map(
+                  (stop: { lat: number; lng: number }, index: number) => (
+                    <Marker
+                      key={index}
+                      position={{ lat: stop.lat, lng: stop.lng }}
+                      icon={{
+                        url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                      }}
+                    />
+                  )
+                )}
               {directions && <DirectionsRenderer directions={directions} />}
             </GoogleMap>
           )}
-          <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-lg rounded-t-lg p-4 z-50">
+
+          <div className="fixed bottom-0 left-0 w-full h-[21vh] bg-white border-t border-gray-200 shadow-lg rounded-t-lg p-4 z-50">
             <div className="flex items-center justify-between mb-4">
               {rideDetails.user ? (
                 <div className="flex items-center">
@@ -614,6 +616,7 @@ const RidePage = () => {
                   </div>
                   <div className="text-sm">
                     <div className="font-semibold">{rideDetails.user.name}</div>
+                    <p>${rideDetails.fare}</p>
                     <p>{eta}</p>
                   </div>
                 </div>
