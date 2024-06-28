@@ -585,8 +585,8 @@ const Dashboard = () => {
 
 
   
-  let parsedPickupLocation = "";
-  let parsedDropoffLocation = "";
+  let parsedPickupLocation: Coordinates;
+  let parsedDropoffLocation: Coordinates;
 
   if (selectedRide && typeof selectedRide.dropoffLocation === "string") {
     parsedPickupLocation = JSON.parse(selectedRide.pickupLocation);
