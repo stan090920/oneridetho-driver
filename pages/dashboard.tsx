@@ -612,6 +612,8 @@ const Dashboard = () => {
       return;
     }
 
+    //console.log(`Driver location: lat=${driverLocation.lat}, lng=${driverLocation.lng}`);
+
     directionsService.route(
       {
         origin: {
