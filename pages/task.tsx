@@ -73,7 +73,12 @@ const Task = () => {
 
   // Function to fetch rides data
   useEffect(() => {
-    fetchRidesData();
+    fetchRidesData(); // Initial fetch when the component mounts
+
+    const intervalId = setInterval(fetchRidesData, 3000); // Fetch data every 10 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   // Fetch rides data function
