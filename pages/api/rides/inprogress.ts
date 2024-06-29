@@ -17,15 +17,19 @@ export default async function handler(
     try {
       const inprogressRides = await prisma.ride.findMany({
         where: {
-          driverId: session.user.id, 
-          status: 'InProgress',
+          driverId: session.user.id,
+          OR: [
+            { status: "InProgress" },
+            { status: "Requested", isAccepted: true },
+            { status: "Scheduled", isAccepted: true },
+          ],
         },
         select: {
           id: true,
           status: true,
           pickupLocation: true,
           dropoffLocation: true,
-        }
+        },
       });
 
 
