@@ -103,7 +103,7 @@ const Task = () => {
         const inProgress = await Promise.all(
           data.filter((ride) =>
                 (ride.status === "InProgress" && ride.driverId === session?.user.id) ||
-                (ride.isAccepted &&(ride.status === "Requested" || ride.status === "Scheduled") && ride.driverId === session?.user.id)
+                (ride.isAccepted && (ride.status === "Requested" || ride.status === "Scheduled") && ride.driverId === session?.user.id)
             ).map(processRideLocations));
 
         const completed = await Promise.all(data.filter((ride) => (ride.status === "Completed") && 

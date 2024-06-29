@@ -59,19 +59,29 @@ const AdminPanel = () => {
     );
   };
 
+  const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
+    try {
+      const response = await axios.post("/api/reverseGeocode", { lat, lng });
+      return response.data.address;
+    } catch (error) {
+      console.error("Error in reverse geocoding:", error);
+      return "";
+    }
+  };
+
   useEffect(() => {
     const fetchDrivers = async () => {
       try {
         setLoadingDrivers(true);
-        const response = await fetch('/api/drivers');
+        const response = await fetch("/api/drivers");
         if (response.ok) {
           const data: Driver[] = await response.json();
           setDrivers(data);
         } else {
-          console.error('Failed to fetch drivers');
+          console.error("Failed to fetch drivers");
         }
       } catch (error) {
-        console.error('Error fetching drivers:', error);
+        console.error("Error fetching drivers:", error);
       } finally {
         setLoadingDrivers(false);
       }
@@ -80,40 +90,66 @@ const AdminPanel = () => {
     const fetchRides = async () => {
       try {
         setLoadingRides(true);
-        const response = await fetch('/api/allride');
+        const response = await fetch("/api/allride");
         if (response.ok) {
           const data: Ride[] = await response.json();
-          const filteredRides = data.filter(ride => 
-            ['Scheduled', 'InProgress', 'Requested'].includes(ride.status)
+          const filteredRides = await Promise.all(
+            data
+              .filter((ride) =>
+                ["Scheduled", "InProgress", "Requested"].includes(ride.status)
+              )
+              .map(async (ride) => {
+                const pickupLocation = JSON.parse(ride.pickupLocation);
+                const dropoffLocation = JSON.parse(ride.dropoffLocation);
+                const pickupAddress = await reverseGeocode(
+                  pickupLocation.lat,
+                  pickupLocation.lng
+                );
+                const dropoffAddress = await reverseGeocode(
+                  dropoffLocation.lat,
+                  dropoffLocation.lng
+                );
+                return {
+                  ...ride,
+                  pickupLocation: pickupAddress,
+                  dropoffLocation: dropoffAddress,
+                };
+              })
           );
           setRides(filteredRides);
         } else {
-          console.error('Failed to fetch rides');
+          console.error("Failed to fetch rides");
         }
       } catch (error) {
-        console.error('Error fetching rides:', error);
+        console.error("Error fetching rides:", error);
       } finally {
         setLoadingRides(false);
       }
     };
 
     const fetchAdminDetails = async () => {
-      const { 'admin-token': token } = parseCookies();
+      const { "admin-token": token } = parseCookies();
       try {
-        const response = await axios.get('/api/admin/fetch-admin', {
+        const response = await axios.get("/api/admin/fetch-admin", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         setAdminName(response.data.name);
       } catch (error) {
-        console.error('Failed to fetch admin details:', error);
+        console.error("Failed to fetch admin details:", error);
       }
     };
 
     fetchDrivers();
     fetchRides();
     fetchAdminDetails();
+
+    // Set an interval to fetch rides periodically
+    const interval = setInterval(fetchRides, 60000); // 60 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
   }, []);
 
   const handleCheckboxChange = (id: number) => {

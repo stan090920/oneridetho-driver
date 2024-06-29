@@ -47,15 +47,23 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { 'admin-token': token } = parseCookies();
+        const { "admin-token": token } = parseCookies();
         const headers = { Authorization: `Bearer ${token}` };
 
-        const [rideResponse, driverResponse, earningsResponse, cancellationResponse, userResponse] = await Promise.all([
-          axios.get<RideStats>('/api/rides/statistics', { headers }),
-          axios.get<DriverStats>('/api/drivers/statistics', { headers }),
-          axios.get<EarningsStats>('/api/earnings/statistics', { headers }),
-          axios.get<CancellationStats>('/api/cancellations/statistics', { headers }),
-          axios.get<UserStats>('/api/users/statistics', { headers })
+        const [
+          rideResponse,
+          driverResponse,
+          earningsResponse,
+          cancellationResponse,
+          userResponse,
+        ] = await Promise.all([
+          axios.get<RideStats>("/api/rides/statistics", { headers }),
+          axios.get<DriverStats>("/api/drivers/statistics", { headers }),
+          axios.get<EarningsStats>("/api/earnings/statistics", { headers }),
+          axios.get<CancellationStats>("/api/cancellations/statistics", {
+            headers,
+          }),
+          axios.get<UserStats>("/api/users/statistics", { headers }),
         ]);
 
         setRideStats(rideResponse.data);
@@ -64,11 +72,17 @@ const Dashboard = () => {
         setCancellationStats(cancellationResponse.data);
         setUserStats(userResponse.data);
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error("Error fetching dashboard data:", error);
       }
     };
 
     fetchData();
+
+    // Set an interval to fetch data periodically
+    const interval = setInterval(fetchData, 3000); // 3 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
   }, []);
 
   if (!rideStats || !driverStats || !earningsStats || !cancellationStats || !userStats) {
