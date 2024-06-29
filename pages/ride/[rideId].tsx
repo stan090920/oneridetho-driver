@@ -13,6 +13,7 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { Spinner } from "@/components/Spinner";
 import toast from "react-hot-toast";
+import useDisableHoverOnMobile from "../../scripts/DisableHoverOnMobile";
 
 const mapContainerStyle = {
   width: "100%",
@@ -97,19 +98,7 @@ const RidePage = () => {
     fetcher
   );
 
-  useEffect(() => {
-    // Add a class to the body to indicate touch support
-    const handleTouchStart = () => {
-      document.body.classList.add("is-touch");
-      window.removeEventListener("touchstart", handleTouchStart);
-    };
-
-    window.addEventListener("touchstart", handleTouchStart);
-
-    return () => {
-      window.removeEventListener("touchstart", handleTouchStart);
-    };
-  }, []);
+  useDisableHoverOnMobile;
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
