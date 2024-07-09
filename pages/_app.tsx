@@ -1,3 +1,4 @@
+import ChatPanel from '@/components/ChatPanel';
 import Navbar from '@/components/Navbar';
 import '@/styles/globals.css'
 import { SessionProvider } from 'next-auth/react'
@@ -9,6 +10,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
     <SessionProvider session={pageProps.session}>
       <Toaster position="bottom-center" />
       <Navbar />
+      <ChatPanel />
       <Component {...pageProps} />
     </SessionProvider>
   );

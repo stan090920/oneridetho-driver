@@ -20,6 +20,7 @@ model User {
   bookings Booking[]
   rides    Ride[]    @relation("UserRides")
   sessions Session[] @relation("UserSessions")
+  messages Message[] @relation("UserMessages")
 }
 
 model Account {
@@ -65,6 +66,7 @@ model Driver {
   carImageUrl     String?
   locationId      Int?      @unique
   numberOfRatings Int?      @default(0)
+  isOnline        Boolean   @default(false)
   bookings        Booking[]
   Location        Location?
   rides           Ride[]    @relation("DriverRides")
@@ -99,9 +101,11 @@ model Ride {
   extraCharges        Float?     @default(0)
   stopWaitTimes       Json?
   stops               Json?
+  pickupDescription   String?
   bookings            Booking[]
   driver              Driver?    @relation("DriverRides", fields: [driverId], references: [id])
   user                User       @relation("UserRides", fields: [userId], references: [id])
+  messages            Message[]  @relation("RideMessages")
 }
 
 model Location {
@@ -110,6 +114,16 @@ model Location {
   long     Json
   driverId Int?    @unique
   Driver   Driver? @relation(fields: [driverId], references: [id])
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now())
+  userId    Int
+  rideId    Int
+  user      User     @relation("UserMessages", fields: [userId], references: [id])
+  ride      Ride     @relation("RideMessages", fields: [rideId], references: [id])
 }
 
 enum RideStatus {
