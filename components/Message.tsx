@@ -23,7 +23,7 @@ const Message: React.FC<MessageProps> = ({ message }) => {
     <div>
       <div
         className={`chat ${
-          message.uid === session?.user?.id ? "chat-end" : "chat-start"
+          message.uid === session?.user?.id.toString() ? "chat-end" : "chat-start"
         }`}
       >
         <div className="chat-image avatar">
