@@ -16,7 +16,6 @@ interface MessageProps {
 const Message: React.FC<MessageProps> = ({ message }) => {
   const { data: session } = useSession();
 
-  // Extracting time from Timestamp
   const messageTime = message.createdAt?.toDate().toLocaleTimeString();
 
   return (
