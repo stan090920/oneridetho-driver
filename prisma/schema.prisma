@@ -9,18 +9,21 @@ datasource db {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  name     String
-  photoUrl String?
-  email    String    @unique
-  rating   Float?    @default(5)
-  phone    String?   @unique
-  provider String 
-  account  Account?
-  bookings Booking[]
-  rides    Ride[]    @relation("UserRides")
-  sessions Session[] @relation("UserSessions")
-  messages Message[] @relation("UserMessages")
+  id                  Int       @id @default(autoincrement())
+  name                String
+  photoUrl            String?
+  email               String    @unique
+  rating              Float?    @default(5)
+  phone               String?   @unique
+  provider            String 
+  governmentIssuedId  String?
+  verificationPhotoUrl String?
+  verified            Boolean   @default(false)
+  account             Account?
+  bookings            Booking[]
+  rides               Ride[]    @relation("UserRides")
+  sessions            Session[] @relation("UserSessions")
+  messages            Message[] @relation("UserMessages")
 }
 
 model Account {

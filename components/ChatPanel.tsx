@@ -1,9 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ChatBox from "./ChatBox";
 import SendMessage from "./SendMessage";
+import { useSession } from "next-auth/react";
+
+interface Ride {
+  id: number;
+  pickupLocation: string;
+  dropoffLocation: string;
+}
 
 const ChatPanel: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [rides, setRides] = useState<Ride[]>([]);
+  const [selectedRideId, setSelectedRideId] = useState<number | null>(null);
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    const fetchRides = async () => {
+      if (session) {
+        try {
+          const response = await fetch("../pages/api/rides/inprogress.ts");
+          const data = await response.json();
+          setRides(data);
+          if (data.length > 0) {
+            setSelectedRideId(data[0].id);
+          }
+        } catch (error) {
+          console.error("Error fetching rides:", error);
+        }
+      }
+    };
+
+    fetchRides();
+  }, [session]);
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
@@ -19,7 +48,7 @@ const ChatPanel: React.FC = () => {
         Chat
       </button>
       {isOpen && (
-        <div className="fixed bottom-5 left-5 w-11/12 sm:w-2/4 max-w-lg h-3/4 max-h-[80vm] bg-white rounded-lg shadow-lg z-50">
+        <div className="fixed bottom-5 left-5 w-11/12 sm:w-2/4 max-w-lg h-3/4 max-h-[80vh] bg-white rounded-lg shadow-lg z-50">
           <div className="flex justify-between items-center bg-green-600 text-white p-3 rounded-t-lg">
             <div>Chat</div>
             <button
@@ -43,12 +72,28 @@ const ChatPanel: React.FC = () => {
               </svg>
             </button>
           </div>
-          <div className="p-4 h-[55vh] overflow-y-auto">
-            {/* Chat content goes here */}
-            <ChatBox />
-          </div>
-          <div className="absolute bottom-0 w-full bg-gray-200 shadow-lg">
-            <SendMessage />
+          <div className="p-4 h-full flex flex-col">
+            <div className="flex space-x-2 mb-2 overflow-x-auto">
+              {rides.map((ride) => (
+                <button
+                  key={ride.id}
+                  className={`py-2 px-4 rounded-lg ${
+                    selectedRideId === ride.id
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                  onClick={() => setSelectedRideId(ride.id)}
+                >
+                  Ride {ride.id}
+                </button>
+              ))}
+            </div>
+            <div className="p-4 h-[55vh] overflow-y-auto">
+              {selectedRideId && <ChatBox rideId={selectedRideId} />}
+            </div>
+            <div className="absolute bottom-0 w-full bg-gray-200 shadow-lg">
+              {selectedRideId && <SendMessage rideId={selectedRideId} />}
+            </div>
           </div>
         </div>
       )}

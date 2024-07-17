@@ -1,34 +1,15 @@
-import React, { useState, FormEvent, useEffect } from "react";
+import React, { useState, FormEvent } from "react";
 import { db } from "../scripts/Firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useSession } from "next-auth/react";
-import axios from "axios";
 
-interface Driver {
-  id: number;
-  name: string;
-  photoUrl?: string;
+interface SendMessageProps {
+  rideId: number;
 }
 
-function SendMessage() {
+const SendMessage: React.FC<SendMessageProps> = ({ rideId }) => {
   const [value, setValue] = useState("");
   const { data: session } = useSession();
-  const [driver, setDriver] = useState<Driver | null>(null);
-
-  useEffect(() => {
-    const fetchDriver = async () => {
-      if (session) {
-        try {
-          const response = await axios.get(`/api/drivers?id=${session.user.id}`);
-          setDriver(response.data);
-        } catch (error) {
-          console.error('Error fetching driver:', error);
-        }
-      }
-    };
-
-    fetchDriver();
-  }, [session]);
 
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
@@ -39,8 +20,8 @@ function SendMessage() {
     }
 
     try {
-      if (session?.user && driver) {
-        const { id: uid, name: displayName, photoUrl: photoURL } = driver;
+      if (session?.user) {
+        const { id: uid, name: displayName, image: photoURL } = session.user;
 
         await addDoc(collection(db, "messages"), {
           text: value,
@@ -48,6 +29,7 @@ function SendMessage() {
           avatar: photoURL,
           createdAt: serverTimestamp(),
           uid,
+          rideId,
         });
       } else {
         alert("User session not found");
@@ -55,6 +37,8 @@ function SendMessage() {
     } catch (error) {
       console.error(error);
     }
+
+    console.log(value);
     setValue("");
   };
 
@@ -76,6 +60,6 @@ function SendMessage() {
       </form>
     </div>
   );
-}
+};
 
 export default SendMessage;

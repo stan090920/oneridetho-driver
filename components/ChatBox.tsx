@@ -5,6 +5,7 @@ import {
   query,
   onSnapshot,
   orderBy,
+  where,
   limit,
   DocumentData,
   QueryDocumentSnapshot,
@@ -19,9 +20,14 @@ interface MessageData {
   avatar: string;
   createdAt: Timestamp;
   uid: string;
+  rideId: number;
 }
 
-function ChatBox() {
+interface ChatBoxProps {
+  rideId: number;
+}
+
+const ChatBox: React.FC<ChatBoxProps> = ({ rideId }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<MessageData[]>([]);
 
@@ -34,6 +40,7 @@ function ChatBox() {
   useEffect(() => {
     const q = query(
       collection(db, "messages"),
+      where("rideId", "==", rideId),
       orderBy("createdAt"),
       limit(10)
     );
@@ -46,7 +53,7 @@ function ChatBox() {
     });
 
     return (): void => unsubscribe();
-  }, []);
+  }, [rideId]);
 
   return (
     <div className="containerWrap bg-inherit">
@@ -56,6 +63,6 @@ function ChatBox() {
       <div ref={messagesEndRef}></div>
     </div>
   );
-}
+};
 
 export default ChatBox;
