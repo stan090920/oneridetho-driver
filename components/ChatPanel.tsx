@@ -19,10 +19,17 @@ const ChatPanel: React.FC = () => {
     const fetchRides = async () => {
       if (session) {
         try {
-          const response = await fetch("../pages/api/rides/inprogress.ts");
-          const data = await response.json();
+          const response = await fetch("/api/rides/inprogress");
+          const text = await response.text();
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = JSON.parse(text);
           setRides(data);
           if (data.length > 0) {
+            console.log("Ride ID: " + data[0].id);
             setSelectedRideId(data[0].id);
           }
         } catch (error) {
@@ -91,9 +98,8 @@ const ChatPanel: React.FC = () => {
             <div className="p-4 h-[55vh] overflow-y-auto">
               {selectedRideId && <ChatBox rideId={selectedRideId} />}
             </div>
-            <div className="absolute bottom-0 w-full bg-gray-200 shadow-lg">
-              {selectedRideId && <SendMessage rideId={selectedRideId} />}
-            </div>
+
+            {selectedRideId && <SendMessage rideId={selectedRideId} />}
           </div>
         </div>
       )}

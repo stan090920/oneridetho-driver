@@ -669,7 +669,6 @@ const Dashboard = () => {
   };
 
 
-
   return session && isLoaded ? (
     <GoogleMap
       mapContainerStyle={containerStyle}
@@ -686,21 +685,26 @@ const Dashboard = () => {
           />
         ))}
 
-      {inProgressRides.map((ride) => (
-        <div
-          key={ride.id}
-          className="absolute bottom-0 bg-white w-full h-[20vh] pt-4 pb-2 rounded-t-[16px]"
-        >
-          <a href={`/ride/${ride.id}`}>
-            <div className="text-center">Go Back to Ride</div>
-            <div className="px-2 mt-2">
-              <li>{JSON.parse(ride.pickupLocation)}</li>
-              <div className="border-l-2 h-5 border-black"></div>
-              <li>{JSON.parse(ride.dropoffLocation)}</li>
-            </div>
-          </a>
-        </div>
-      ))}
+      {inProgressRides.map((ride) => {
+        const pickupCoords = JSON.parse(ride.pickupLocation);
+        const dropoffCoords = JSON.parse(ride.dropoffLocation);
+
+        return (
+          <div
+            key={ride.id}
+            className="absolute bottom-0 bg-white w-full h-[20vh] pt-4 pb-2 rounded-t-[16px]"
+          >
+            <a href={`/ride/${ride.id}`}>
+              <div className="text-center">Click to go Back to Ride</div>
+              <div className="px-2 mt-2">
+                <li>{`Latitude: ${pickupCoords.lat}, Longitude: ${pickupCoords.lng}`}</li>
+                <div className="border-l-2 h-5 border-black"></div>
+                <li>{`Latitude: ${dropoffCoords.lat}, Longitude: ${dropoffCoords.lng}`}</li>
+              </div>
+            </a>
+          </div>
+        );
+      })}
 
       {selectedRide && (
         <>
@@ -785,7 +789,7 @@ const Dashboard = () => {
               <p>
                 {typeof dropoffAddress === "object"
                   ? JSON.stringify(dropoffAddress)
-                  : dropoffAddress || "Loading"}
+                  : dropoffAddress || "Loading..."}
               </p>
             </div>
             {/* Displaying the status and pickup time */}
