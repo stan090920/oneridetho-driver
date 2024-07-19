@@ -18,11 +18,13 @@ const Message: React.FC<MessageProps> = ({ message }) => {
 
   const messageTime = message.createdAt?.toDate().toLocaleTimeString();
 
+  const userId = session?.user ? `driver_${session.user.id}` : "";
+
   return (
     <div>
       <div
         className={`chat ${
-          message.uid === session?.user?.id.toString() ? "chat-end" : "chat-start"
+          message.uid === userId ? "chat-end" : "chat-start"
         }`}
       >
         <div className="chat-image avatar">

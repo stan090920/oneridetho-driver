@@ -29,7 +29,6 @@ const ChatPanel: React.FC = () => {
           const data = JSON.parse(text);
           setRides(data);
           if (data.length > 0) {
-            console.log("Ride ID: " + data[0].id);
             setSelectedRideId(data[0].id);
           }
         } catch (error) {

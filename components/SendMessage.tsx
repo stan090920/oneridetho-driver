@@ -1,15 +1,40 @@
-import React, { useState, FormEvent } from "react";
+import React, { useState, FormEvent, useEffect } from "react";
 import { db } from "../scripts/Firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useSession } from "next-auth/react";
+import axios from "axios";
 
 interface SendMessageProps {
   rideId: number;
 }
 
+interface Driver {
+  id: number;
+  name: string;
+  photoUrl?: string;
+}
+
 const SendMessage: React.FC<SendMessageProps> = ({ rideId }) => {
   const [value, setValue] = useState("");
   const { data: session } = useSession();
+  const [driver, setDriver] = useState<Driver | null>(null);
+
+  useEffect(() => {
+    const fetchDriver = async () => {
+      if (session) {
+        try {
+          const response = await axios.get(
+            `/api/drivers?id=${session.user.id}`
+          );
+          setDriver(response.data);
+        } catch (error) {
+          console.error("Error fetching driver:", error);
+        }
+      }
+    };
+
+    fetchDriver();
+  }, [session]);
 
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
@@ -21,14 +46,15 @@ const SendMessage: React.FC<SendMessageProps> = ({ rideId }) => {
 
     try {
       if (session?.user) {
-        const { id: uid, name: displayName, image: photoURL } = session.user;
+        const { id: uid } = session.user;
+        const userId = `driver_${uid}`;
 
         await addDoc(collection(db, "messages"), {
           text: value,
-          name: displayName,
-          avatar: photoURL,
+          name: driver?.name,
+          avatar: driver?.photoUrl,
           createdAt: serverTimestamp(),
-          uid,
+          uid: userId,
           rideId,
         });
       } else {
@@ -38,7 +64,6 @@ const SendMessage: React.FC<SendMessageProps> = ({ rideId }) => {
       console.error(error);
     }
 
-    console.log(value);
     setValue("");
   };
 
