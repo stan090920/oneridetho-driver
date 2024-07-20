@@ -37,7 +37,14 @@ const ChatPanel: React.FC = () => {
       }
     };
 
+    // Initial fetch
     fetchRides();
+
+    // Set up interval to fetch rides every 3 seconds
+    const intervalId = setInterval(fetchRides, 3000);
+
+    // Clear interval on component unmount
+    return () => clearInterval(intervalId);
   }, [session]);
 
   const toggleChat = () => {

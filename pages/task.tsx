@@ -225,7 +225,12 @@ const Task = () => {
   const RenderRides = (rides: Ride[]) => {
     return rides.length > 0 ? (
       rides.map((ride) => {
-        const rideLink = ride.status === "InProgress" ? `/ride/${ride.id}` : `/dashboard?rideId=${ride.id}`;
+        const rideLink =
+          ride.status === "InProgress" ||
+          ((ride.status === "Requested" || ride.status === "Scheduled") &&
+            ride.isAccepted)
+            ? `/ride/${ride.id}`
+            : `/dashboard?rideId=${ride.id}`;
 
         return (
           <li key={ride.id} className="border-2 py-2 pl-2 pr-2 mt-2 rounded-md">

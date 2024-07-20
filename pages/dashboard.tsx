@@ -29,6 +29,7 @@ interface Ride {
   pickupLocation: any;
   dropoffLocation: any;
   passengerCount: number;
+  isAccepted: boolean;
   fare: number;
   user: User;
   paymentMethod: string;
@@ -259,15 +260,23 @@ const Dashboard = () => {
         return;
       }
 
-      // Fetch in-progress rides to check for scheduling conflicts
-      const inProgressResponse = await fetch('/api/rides/inprogress');
+      const inProgressResponse = await fetch("/api/rides/inprogress");
       if (!inProgressResponse.ok) {
         throw new Error(`Error: ${inProgressResponse.status}`);
       }
-      const inProgressRides = await inProgressResponse.json();
+      const inProgressRides: Ride[] = await inProgressResponse.json();
 
-      if (inProgressRides.length > 0) {
-        alert('You currently have a ride in progress and cannot accept a new one.');
+      // Check if there are any in-progress or requested rides that are not scheduled
+      const hasNonScheduledRide = inProgressRides.some(
+        (ride: Ride) =>
+          ride.status === "InProgress" ||
+          (ride.status === "Requested" && ride.isAccepted)
+      );
+
+      if (hasNonScheduledRide) {
+        alert(
+          "You currently have a ride in progress or a requested ride that you have accepted and cannot accept a new requested ride."
+        );
         setIsLoading(false);
         setLoadingRideId(null);
         router.push("/");
