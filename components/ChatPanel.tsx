@@ -14,6 +14,7 @@ const ChatPanel: React.FC = () => {
   const [rides, setRides] = useState<Ride[]>([]);
   const [selectedRideId, setSelectedRideId] = useState<number | null>(null);
   const { data: session } = useSession();
+  const isLoggedIn = session != null;
 
   useEffect(() => {
     const fetchRides = async () => {
@@ -53,6 +54,7 @@ const ChatPanel: React.FC = () => {
 
   return (
     <>
+    {isLoggedIn && rides.length > 0 && (
       <button
         className="fixed bottom-5 left-5 bg-green-600 text-white rounded-full px-4 py-2 z-50"
         onClick={toggleChat}
@@ -60,6 +62,7 @@ const ChatPanel: React.FC = () => {
       >
         Chat
       </button>
+    )}
       {isOpen && (
         <div className="fixed bottom-5 left-5 w-11/12 sm:w-2/4 max-w-lg h-4/5 max-h-[90vh] bg-white rounded-lg shadow-lg z-50">
           <div className="flex justify-between items-center bg-green-600 text-white p-3 rounded-t-lg">
