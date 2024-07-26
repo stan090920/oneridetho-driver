@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ message: 'Admin not found' });
     }
 
-    res.status(200).json({ name: admin.name, email: admin.email });
+    res.status(200).json({ id: admin.id, name: admin.name, email: admin.email });
   } catch (error:any) {
     console.error('Error fetching admin details:', error.message);
     res.status(500).json({ message: 'Internal server error' });

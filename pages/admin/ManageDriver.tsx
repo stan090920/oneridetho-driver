@@ -223,7 +223,7 @@ const ManageDriver = () => {
             <div>
               <label className="block mb-2 font-semibold">Photo</label>
               {driver.photoUrl && (
-                <img src={driver.photoUrl} className="block w-16 h-16 mb-2" />
+                <img src={driver.photoUrl} className="block w-16 h-16 mb-2" alt='driver-photo' />
               )}
               <input
                 type="file"
@@ -236,7 +236,7 @@ const ManageDriver = () => {
             <div>
               <label className="block mb-2 font-semibold">Car Image</label>
               {driver.carImageUrl && (
-                <img src={driver.carImageUrl} className="block w-16 h-16 mb-2" />
+                <img src={driver.carImageUrl} className="block w-16 h-16 mb-2" alt='car-image' />
               )}
               <input
                 type="file"

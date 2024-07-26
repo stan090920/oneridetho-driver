@@ -18,6 +18,13 @@ interface Driver {
   password: string;
 }
 
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  verified: boolean;
+}
+
 interface Ride {
   id: number;
   status: string;
@@ -36,11 +43,15 @@ interface Ride {
 
 const AdminPanel = () => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [rides, setRides] = useState<Ride[]>([]);
   const [selectedDriverId, setSelectedDriverId] = useState<number | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [currentPanel, setCurrentPanel] = useState<string>('drivers');
   const [adminName, setAdminName] = useState<string>('Admin');
+  const [adminId, setAdminId] = useState<number | null>(null);
   const [loadingDrivers, setLoadingDrivers] = useState<boolean>(true);
+  const [loadingUsers, setLoadingUsers] = useState<boolean>(true);
   const [loadingRides, setLoadingRides] = useState<boolean>(true);
   const router = useRouter();
 
@@ -84,6 +95,24 @@ const AdminPanel = () => {
         console.error("Error fetching drivers:", error);
       } finally {
         setLoadingDrivers(false);
+      }
+    };
+
+    const fetchUsers = async () => {
+      try {
+        setLoadingUsers(true);
+        const response = await fetch("/api/users/users");
+        if (response.ok) {
+          const data: User[] = await response.json();
+          const sortedUsers = data.sort((a, b) => Number(a.verified) - Number(b.verified));
+          setUsers(sortedUsers);
+        } else {
+          console.error("Failed to fetch users");
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setLoadingUsers(false);
       }
     };
 
@@ -135,13 +164,17 @@ const AdminPanel = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        setAdminName(response.data.name);
+        const adminData = response.data;
+
+        setAdminName(adminData.name);
+        setAdminId(adminData.id);
       } catch (error) {
         console.error("Failed to fetch admin details:", error);
       }
     };
 
     fetchDrivers();
+    fetchUsers();
     fetchRides();
     fetchAdminDetails();
 
@@ -154,6 +187,10 @@ const AdminPanel = () => {
 
   const handleCheckboxChange = (id: number) => {
     setSelectedDriverId(prevId => (prevId === id ? null : id));
+  };
+
+  const handleUserCheckboxChange = (id: number) => {
+    setSelectedUserId(prevId => (prevId === id ? null : id));
   };
 
   const handleDelete = async () => {
@@ -180,7 +217,6 @@ const AdminPanel = () => {
       }
     }
   };
-
 
   const handleModify = () => {
     if (selectedDriverId !== null) {
@@ -261,6 +297,36 @@ const AdminPanel = () => {
     </div>
   );
 
+  const renderUsersPanel = () => (
+  <div className="mb-6 h-[60vh] max-h-80">
+    {loadingUsers ? (
+      <p className="font-semibold text-lg text-center">Loading users...</p>
+    ) : (
+      <>
+        <div className="h-96 overflow-auto mx-auto max-w-screen-lg">
+          {users.map((user: any) => (
+            <div key={user.id} className="flex items-center justify-between mb-4 h-10 border-b border-gray-200">
+              <div className="flex-grow">
+                <Link href={`/admin/UserDetails?id=${user.id}`} passHref>
+                  <div className="cursor-pointer">
+                    <p className="font-semibold">{user.name}</p>
+                    <p className="text-gray-600 hidden sm:block">{user.email}</p>
+                  </div>
+                </Link>
+              </div>
+              <div className={`text-sm ${user.verified ? 'text-green-500' : 'text-red-500'}`}>
+                {user.verified ? 'Verified' : 'Unverified'}
+              </div>
+            </div>
+          ))}
+        </div>
+      </>
+    )}
+  </div>
+);
+
+
+
   const renderRidesPanel = () => (
     <div className="mb-6 max-h-80">
       {loadingRides ? (
@@ -325,18 +391,27 @@ const AdminPanel = () => {
             Drivers
           </button>
           <button 
-            onClick={() => setCurrentPanel('dashboard')} 
-            className={`p-2 ${currentPanel === 'dashboard' ? 'border-b-2 border-black' : ''}`}
+            onClick={() => setCurrentPanel('users')} 
+            className={`p-2 ${currentPanel === 'users' ? 'border-b-2 border-black' : ''}`}
           >
-            Dashboard
+            Users
           </button>
+          {(adminId === 2 || adminId === 3) && (
+            <button 
+              onClick={() => setCurrentPanel('dashboard')} 
+              className={`p-2 ${currentPanel === 'dashboard' ? 'border-b-2 border-black' : ''}`}
+            >
+              Dashboard
+            </button>
+          )}
         </nav>
-        <div className="text-xl font-bold">
+        <div className="text-xl font-bold hidden sm:block">
           {adminName.split(" ")[0]}
         </div>
       </header>
       <main className="flex-grow p-4">
         {currentPanel === 'drivers' && renderDriversPanel()}
+        {currentPanel === 'users' && renderUsersPanel()}
         {currentPanel === 'rides' && renderRidesPanel()}
         {currentPanel === 'dashboard' && <Dashboard />}
       </main>

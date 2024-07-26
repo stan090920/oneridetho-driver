@@ -10,6 +10,7 @@ const AdminLogin = () => {
   const router = useRouter();
 
   const handleLogin = async () => {
+    setError('');
     try {
       const response = await axios.post('/api/admin/login', { email, password });
       setCookie('admin-token', response.data.token);
