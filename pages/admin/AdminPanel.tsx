@@ -298,12 +298,12 @@ const AdminPanel = () => {
   );
 
   const renderUsersPanel = () => (
-  <div className="mb-6 h-[60vh] max-h-80">
+  <div className="mb-6 h-[80vh] max-h-96">
     {loadingUsers ? (
       <p className="font-semibold text-lg text-center">Loading users...</p>
     ) : (
       <>
-        <div className="h-96 overflow-auto mx-auto max-w-screen-lg">
+        <div className=" h-[65vh] overflow-auto mx-auto max-w-screen-lg">
           {users.map((user: any) => (
             <div key={user.id} className="flex items-center justify-between mb-4 h-10 border-b border-gray-200">
               <div className="flex-grow">
