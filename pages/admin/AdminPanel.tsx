@@ -179,7 +179,7 @@ const AdminPanel = () => {
     fetchAdminDetails();
 
     // Set an interval to fetch rides periodically
-    const interval = setInterval(fetchRides, 60000); // 60 seconds
+    const interval = setInterval(fetchRides, 3000); // 3 seconds
 
     // Cleanup interval on component unmount
     return () => clearInterval(interval);
