@@ -43,18 +43,21 @@ export default async function handler(
     // Update user information (only verified status for now)
     try {
       const userId = parseInt(req.query.id as string);
-      const { verified, governmentIssuedId, verificationPhotoUrl, denyReason } =
-        req.body;
+      const { verified, denyReason } = req.body;
+
+      const dataToUpdate = verified
+        ? { verified }
+        : {
+            verified,
+            governmentIssuedId: null,
+            verificationPhotoUrl: null,
+          };
 
       const updatedUser = await prisma.user.update({
         where: {
           id: userId,
         },
-        data: {
-          verified,
-          governmentIssuedId: verified ? undefined : governmentIssuedId,
-          verificationPhotoUrl: verified ? undefined : verificationPhotoUrl,
-        },
+        data: dataToUpdate,
       });
 
       let emailSubject = "";
