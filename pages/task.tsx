@@ -346,6 +346,7 @@ const Task = () => {
           className={`font-bold text-[24px] px-2 ${
             activeButton === "history" ? "text-blue-500" : ""
           }`}
+          title="Ride History"
         >
           <FaHistory />
         </button>

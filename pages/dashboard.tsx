@@ -238,7 +238,7 @@ const Dashboard = () => {
       const rideData = await response.json();
 
       // Check ride status
-      const invalidStatuses = ['Completed', 'Cancelled', 'InProgress'];
+      const invalidStatuses = ["Completed", "Cancelled", "InProgress"];
       if (invalidStatuses.includes(rideData.status)) {
         alert(`You cannot accept a ride that is ${rideData.status}.`);
         setIsLoading(false);
@@ -258,6 +258,17 @@ const Dashboard = () => {
         setLoadingRideId(null);
         router.push("/");
         return;
+      }
+
+      // Check if the driver is within 15 minutes ETA
+      if (eta){
+        const etaInMinutes = parseFloat(eta.split(" ")[0]);
+        if (isNaN(etaInMinutes) || etaInMinutes > 15) {
+          alert("You are too far away to accept this ride.");
+          setIsLoading(false);
+          setLoadingRideId(null);
+          return;
+        }
       }
 
       const inProgressResponse = await fetch("/api/rides/inprogress");
@@ -286,12 +297,14 @@ const Dashboard = () => {
       // Check for scheduling conflicts
       const hasConflict = inProgressRides.some((ride: Ride) => {
         const ridePickupTime = new Date(ride.scheduledPickupTime).getTime();
-        const newRidePickupTime = new Date(rideData.scheduledPickupTime).getTime();
+        const newRidePickupTime = new Date(
+          rideData.scheduledPickupTime
+        ).getTime();
         return ridePickupTime === newRidePickupTime;
       });
 
       if (hasConflict) {
-        alert('You have another ride scheduled for the same time.');
+        alert("You have another ride scheduled for the same time.");
         setIsLoading(false);
         setLoadingRideId(null);
         return;
@@ -651,6 +664,15 @@ const Dashboard = () => {
     );
   };
 
+  useEffect(() => {
+    if (distance) {
+      const kmValue = parseFloat(distance.split(" ")[0]);
+      const milesValue = kmValue * 0.621371;
+      const formattedMiles = `${milesValue.toFixed(2)} miles`;
+      setDistance(formattedMiles);
+    }
+  }, [distance]);
+
   const mapOptions = {
     fullscreenControl: false,
     mapTypeControl: false,
@@ -803,7 +825,7 @@ const Dashboard = () => {
             </div>
             {/* Displaying the status and pickup time */}
             <div className="px-2 mt-2 font-bold text-[18px] text-green-600">
-              {selectedRide.status === "Requested" && <p>Booked</p>}
+              {selectedRide.status === "Requested" && <p>Booked Now</p>}
               {selectedRide.status === "Scheduled" && (
                 <p>
                   Scheduled for{" "}
