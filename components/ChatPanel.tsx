@@ -56,7 +56,7 @@ const ChatPanel: React.FC = () => {
     <>
       {isLoggedIn && rides.length > 0 && (
         <button
-          className="fixed bottom-5 left-5 bg-green-600 text-white rounded-full px-4 py-2 z-[60]"
+          className="fixed bottom-32 left-5 bg-green-600 text-white rounded-full px-4 py-2 z-[60]"
           onClick={toggleChat}
           title="Toggle Chat"
         >
