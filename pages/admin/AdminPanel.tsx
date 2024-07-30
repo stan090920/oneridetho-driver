@@ -47,7 +47,7 @@ const AdminPanel = () => {
   const [rides, setRides] = useState<Ride[]>([]);
   const [selectedDriverId, setSelectedDriverId] = useState<number | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
-  const [currentPanel, setCurrentPanel] = useState<string>('drivers');
+  const [currentPanel, setCurrentPanel] = useState<string>("users");
   const [adminName, setAdminName] = useState<string>('Admin');
   const [adminId, setAdminId] = useState<number | null>(null);
   const [loadingDrivers, setLoadingDrivers] = useState<boolean>(true);

@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
+import sendEmail from "../../../lib/emailServer";
 
 const prisma = new PrismaClient();
 
@@ -42,15 +43,43 @@ export default async function handler(
     // Update user information (only verified status for now)
     try {
       const userId = parseInt(req.query.id as string);
-      const { verified } = req.body;
+      const { verified, governmentIssuedId, verificationPhotoUrl, denyReason } =
+        req.body;
 
       const updatedUser = await prisma.user.update({
         where: {
           id: userId,
         },
         data: {
-          verified: verified,
+          verified,
+          governmentIssuedId: verified ? undefined : governmentIssuedId,
+          verificationPhotoUrl: verified ? undefined : verificationPhotoUrl,
         },
+      });
+
+      let emailSubject = "";
+      let emailText = "";
+      let emailHtml = "";
+
+      if (verified) {
+        emailSubject = "Verification Successful";
+        emailText = `Dear ${updatedUser.name}, your account has been verified successfully.`;
+        emailHtml = `<p>Dear ${updatedUser.name},</p><p>Your account has been verified successfully.</p>`;
+      } else if (!verified && denyReason) {
+        emailSubject = "Verification Denied";
+        emailText = `Dear ${updatedUser.name}, your account verification was denied. Reason: ${denyReason}`;
+        emailHtml = `<p>Dear ${updatedUser.name},</p><p>Your account verification was denied.</p><p>Reason: ${denyReason}</p>`;
+      } else {
+        emailSubject = "Verification Revoked";
+        emailText = `Dear ${updatedUser.name}, your account verification has been revoked.`;
+        emailHtml = `<p>Dear ${updatedUser.name},</p><p>Your account verification has been revoked.</p>`;
+      }
+
+      await sendEmail({
+        subject: emailSubject,
+        text: emailText,
+        html: emailHtml,
+        recipient_email: updatedUser.email,
       });
 
       res.status(200).json(updatedUser);
