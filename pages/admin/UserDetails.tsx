@@ -213,7 +213,7 @@ const UserDetails = () => {
                 />
               </div>
             )}
-            {!user?.verified && !user?.governmentIssuedId && !user?.verificationPhotoUrl && !isLoading && (
+            {!user?.verified && user?.governmentIssuedId && user?.verificationPhotoUrl && !isLoading && (
               <div className="flex flex-col gap-2 mt-2">
                 <div className="flex gap-2">
                   <button
