@@ -280,8 +280,7 @@ const Dashboard = () => {
       // Check if there are any in-progress or requested rides that are not scheduled
       const hasNonScheduledRide = inProgressRides.some(
         (ride: Ride) =>
-          ride.status === "InProgress" ||
-          (ride.status === "Requested" && ride.isAccepted)
+          ride.status === "InProgress" || ride.status === "Requested"
       );
 
       if (hasNonScheduledRide) {

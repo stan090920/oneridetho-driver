@@ -19,6 +19,7 @@ function formatTime(date: any) {
     hour: "numeric",
     minute: "numeric",
     hour12: true,
+    timeZone: "America/Nassau", // Bahamas timezone
   };
   return dateTime.toLocaleString("en-US", options);
 }
