@@ -139,12 +139,13 @@ const RidePage = () => {
     mapRef.current = map;
   }, []);
 
-  const [timer, setTimer] = useState(600);
+  const [timer, setTimer] = useState(300);
   const [timerActive, setTimerActive] = useState(false);
   const [extraCharges, setExtraCharges] = useState(0);
   const [initialPeriodPassed, setInitialPeriodPassed] = useState(false);
   const [isOpeningMaps, setIsOpeningMaps] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
 
   useEffect(() => {
@@ -157,14 +158,21 @@ const RidePage = () => {
             if (prevTimer - 1 <= 0) {
               setInitialPeriodPassed(true);
               notifyUser(); 
+              return 0;
             }
-            return Math.max(prevTimer - 1, 0); 
+            return prevTimer - 1;
           });
         }, 1000);
       } else {
         interval = window.setInterval(() => {
-          setExtraCharges(prevCharges => prevCharges + 1);
-        }, 60000);
+          setTimer((prevTimer) => prevTimer - 1);
+          setElapsedSeconds((prevSeconds) => prevSeconds + 1);
+
+          if (elapsedSeconds + 1 === 60) {
+            setExtraCharges((prevCharges) => prevCharges + 1);
+            setElapsedSeconds(0);
+          }
+        }, 1000);
       }
     } else {
       clearInterval(interval);
@@ -179,7 +187,7 @@ const RidePage = () => {
       setTimerActive(false);
     } else {
       if (!initialPeriodPassed && timer <= 0) {
-        setTimer(600);
+        setTimer(300);
         setInitialPeriodPassed(false);
       }
       setTimerActive(true);
@@ -188,9 +196,11 @@ const RidePage = () => {
   
 
   const formatTime = () => {
-    const minutes = Math.floor(timer / 60);
-    const seconds = timer % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    const absoluteTime = Math.abs(timer);
+    const minutes = Math.floor(absoluteTime / 60);
+    const seconds = absoluteTime % 60;
+    const formattedTime = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    return timer < 0 ? `-${formattedTime}` : formattedTime;
   };
 
   const notifyUser = async () => {
