@@ -77,7 +77,8 @@ export default async function handler(
         let html: string = "";
 
         if (updatedRide.isScheduled && updatedRide.scheduledPickupTime) {
-          const formattedTime = formatTime(updatedRide.scheduledPickupTime);
+          // const formattedTime = formatTime(updatedRide.scheduledPickupTime);
+          const formattedTime = updatedRide.scheduledPickupTime;
           subject = `Your scheduled ride for ${formattedTime} has been confirmed!`;
           text = `Your scheduled ride for ${formattedTime} has been confirmed! Your driver ${updatedRide.driver.name} will arrive in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. Please visit https://www.oneridetho.com/rides/${updatedRide.id} for more details.\n\nHave a great trip!`;
           html = `<p>Your scheduled ride for ${formattedTime} has been confirmed! Your driver ${updatedRide.driver.name} will arrive in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. Please visit <a href="https://www.oneridetho.com/rides/${updatedRide.id}">here</a> for more details.</p><p>Have a great trip!</p>`;
@@ -98,7 +99,8 @@ export default async function handler(
       if (updatedRide.driver && updatedRide.user?.phone) {
         let bodyMessage;
         if (updatedRide.isScheduled && updatedRide.scheduledPickupTime) {
-          const formattedTime = formatTime(updatedRide.scheduledPickupTime);
+          // const formattedTime = formatTime(updatedRide.scheduledPickupTime);
+          const formattedTime = updatedRide.scheduledPickupTime;
           bodyMessage = `Your scheduled ride for ${formattedTime} has been confirmed! Your driver ${updatedRide.driver.name} will arrive in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. Please visit https://www.oneridetho.com/rides/${updatedRide.id} for more details.\n\nHave a great trip!`;
         } else {
           bodyMessage = `Great news! Your ride with ${updatedRide.driver.name} has been confirmed. Your driver will be in a ${updatedRide.driver.carType} with license plate ${updatedRide.driver.licensePlate}. For more details about your ride, visit: https://www.oneridetho.com/rides/${updatedRide.id}\n\nWe wish you a safe and pleasant journey!`;

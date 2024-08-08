@@ -36,6 +36,7 @@ interface Ride {
   //@ts-ignore
   stops: Stop[];
   scheduledPickupTime: string;
+  driverId: number;
 }
 interface Coordinates {
   lat: number;
@@ -220,7 +221,7 @@ const Dashboard = () => {
     const driverId = session?.user.id;
 
     if (!driverId) {
-      alert('Driver ID not found. Please log in again.');
+      alert("Driver ID not found. Please log in again.");
       return;
     }
 
@@ -229,103 +230,11 @@ const Dashboard = () => {
     setError(null);
 
     try {
-      // Fetch the ride details
-      const response = await fetch(`/api/rides/${rideId}`);
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
-      const rideData = await response.json();
+      const rideData = await fetchRideData(rideId);
+      validateRideStatus(rideData);
 
-      // Check ride status
-      const invalidStatuses = ["Completed", "Cancelled", "InProgress"];
-      if (invalidStatuses.includes(rideData.status)) {
-        alert(`You cannot accept a ride that is ${rideData.status}.`);
-        setIsLoading(false);
-        setLoadingRideId(null);
-        router.push("/");
-        return;
-      }
-
-      // Check if the ride has already been accepted by another driver
-      if (rideData.isAccepted && rideData.driverId === driverId) {
-        alert("You already accepted this ride!");
-        router.push(`/ride/${rideId}`);
-        return;
-      } else if (rideData.isAccepted && rideData.driverId !== driverId) {
-        alert("This ride has already been accepted by another driver.");
-        setIsLoading(false);
-        setLoadingRideId(null);
-        router.push("/");
-        return;
-      }
-
-      // Check if the driver is within 15 minutes ETA
-      if (eta){
-        const etaInMinutes = parseFloat(eta.split(" ")[0]);
-        if (isNaN(etaInMinutes) || etaInMinutes > 15) {
-          alert("You are too far away to accept this ride.");
-          setIsLoading(false);
-          setLoadingRideId(null);
-          return;
-        }
-      }
-
-      const inProgressResponse = await fetch("/api/rides/inprogress");
-      if (!inProgressResponse.ok) {
-        throw new Error(`Error: ${inProgressResponse.status}`);
-      }
-      const inProgressRides: Ride[] = await inProgressResponse.json();
-
-      // Check if there are any in-progress or requested rides that are not scheduled
-      const hasNonScheduledRide = inProgressRides.some(
-        (ride: Ride) =>
-          ride.status === "InProgress" || ride.status === "Requested"
-      );
-
-      if (hasNonScheduledRide) {
-        alert(
-          "You currently have a ride in progress or a requested ride that you have accepted and cannot accept a new requested ride."
-        );
-        setIsLoading(false);
-        setLoadingRideId(null);
-        router.push("/");
-        return;
-      }
-
-      // Check for scheduling conflicts
-      const hasConflict = inProgressRides.some((ride: Ride) => {
-        const ridePickupTime = new Date(ride.scheduledPickupTime).getTime();
-        const newRidePickupTime = new Date(
-          rideData.scheduledPickupTime
-        ).getTime();
-        return ridePickupTime === newRidePickupTime;
-      });
-
-      if (hasConflict) {
-        alert("You have another ride scheduled for the same time.");
-        setIsLoading(false);
-        setLoadingRideId(null);
-        return;
-      }
-
-      const acceptResponse = await fetch(`/api/rides/accept/${rideId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ driverId }),
-      });
-
-      if (!acceptResponse.ok) {
-        throw new Error(`Error: ${acceptResponse.status}`);
-      }
-
-      // Remove accepted ride from the list
-      const updatedRides = rides.filter((ride) => ride.id !== rideId);
-      setRides(updatedRides);
-
-      // Redirect to ride details page
-      router.push(`/ride/${rideId}`);
+      await checkForConflicts(rideData);
+      await acceptRideAndRedirect(rideId, driverId);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -336,6 +245,109 @@ const Dashboard = () => {
       setLoadingRideId(null);
     }
   };
+
+  const fetchRideData = async (rideId: number) => {
+    const response = await fetch(`/api/rides/${rideId}`);
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status}`);
+    }
+    return await response.json();
+  };
+
+  const validateRideStatus = (rideData: Ride) => {
+    const invalidStatuses = ["Completed", "Cancelled", "InProgress"];
+
+    if (invalidStatuses.includes(rideData.status)) {
+      alert(`You cannot accept a ride that is ${rideData.status}.`);
+      throw new Error("Invalid ride status");
+    }
+
+    if (rideData.isAccepted) {
+      const message =
+        rideData.driverId === session?.user.id
+          ? "You already accepted this ride!"
+          : "This ride has already been accepted by another driver.";
+      alert(message);
+      throw new Error(message);
+    }
+  };
+
+  const checkForConflicts = async (rideData: Ride) => {
+    await checkDriverDistance();
+    const inProgressRides = await fetchInProgressRides();
+
+    checkInProgressRides(inProgressRides);
+    checkForSchedulingConflicts(inProgressRides, rideData);
+  };
+
+  const checkDriverDistance = () => {
+    if (eta) {
+      const etaInMinutes = parseFloat(eta.split(" ")[0]);
+      if (isNaN(etaInMinutes) || etaInMinutes > 15) {
+        alert("You are too far away to accept this ride.");
+        throw new Error("Driver too far");
+      }
+    }
+  };
+
+  const fetchInProgressRides = async () => {
+    const response = await fetch("/api/rides/inprogress");
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status}`);
+    }
+    return await response.json();
+  };
+
+  const checkInProgressRides = (inProgressRides: Ride[]) => {
+    const hasNonScheduledRide = inProgressRides.some(
+      (ride) => ride.status === "InProgress" || ride.status === "Requested"
+    );
+
+    if (hasNonScheduledRide) {
+      alert(
+        "You currently have a ride in progress or a requested ride that you have accepted and cannot accept a new requested ride."
+      );
+      throw new Error("Ride conflict");
+    }
+  };
+
+  const checkForSchedulingConflicts = (
+    inProgressRides: Ride[],
+    rideData: Ride
+  ) => {
+    const hasConflict = inProgressRides.some((ride) => {
+      const ridePickupTime = new Date(ride.scheduledPickupTime).getTime();
+      const newRidePickupTime = new Date(
+        rideData.scheduledPickupTime
+      ).getTime();
+      return ridePickupTime === newRidePickupTime;
+    });
+
+    if (hasConflict) {
+      alert("You have another ride scheduled for the same time.");
+      throw new Error("Scheduling conflict");
+    }
+  };
+
+  const acceptRideAndRedirect = async (rideId: number, driverId: number) => {
+    const acceptResponse = await fetch(`/api/rides/accept/${rideId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ driverId }),
+    });
+
+    if (!acceptResponse.ok) {
+      throw new Error(`Error: ${acceptResponse.status}`);
+    }
+
+    const updatedRides = rides.filter((ride) => ride.id !== rideId);
+    setRides(updatedRides);
+
+    router.push(`/ride/${rideId}`);
+  };
+
 
 
   useEffect(() => {
