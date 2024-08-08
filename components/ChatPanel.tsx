@@ -7,12 +7,21 @@ interface Ride {
   id: number;
   pickupLocation: string;
   dropoffLocation: string;
+  user: User;
+}
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  // Add other fields as needed
 }
 
 const ChatPanel: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [rides, setRides] = useState<Ride[]>([]);
   const [selectedRideId, setSelectedRideId] = useState<number | null>(null);
+  const [customerEmail, setCustomerEmail] = useState<string | null>(null);
   const { data: session } = useSession();
   const isLoggedIn = session != null;
 
@@ -50,6 +59,16 @@ const ChatPanel: React.FC = () => {
     // Clear interval on component unmount
     return () => clearInterval(intervalId);
   }, [session]);
+
+  useEffect(() => {
+    if (selectedRideId !== null) {
+      const selectedRide = rides.find((ride) => ride.id === selectedRideId);
+      if (selectedRide) {
+        setCustomerEmail(selectedRide.user.email);
+        console.log("Customer email: ", selectedRide.user.email);
+      }
+    }
+  }, [selectedRideId, rides]);
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
@@ -167,7 +186,9 @@ const ChatPanel: React.FC = () => {
               {selectedRideId && <ChatBox rideId={selectedRideId} />}
             </div>
 
-            {selectedRideId && <SendMessage rideId={selectedRideId} />}
+            {selectedRideId && customerEmail && (
+              <SendMessage rideId={selectedRideId} customerEmail={customerEmail} />
+            )}
           </div>
         </div>
       )}

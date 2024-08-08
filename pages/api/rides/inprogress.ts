@@ -29,6 +29,13 @@ export default async function handler(
           status: true,
           pickupLocation: true,
           dropoffLocation: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
         },
       });
 

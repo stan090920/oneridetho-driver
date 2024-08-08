@@ -90,6 +90,8 @@ const RidePage = () => {
   const [dropoffLocation, setDropoffLocation] = useState<Location | null>(null);
   const [isPickedUp, setIsPickedUp] = useState(false);
   const [rideCancelled, setRideCancelled] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [showMapOverlay, setShowMapOverlay] = useState(false);
   const fetcher = (url: string) => axios.get(url).then((res) => res.data);
   const { data: session, status } = useSession();
   const { data: swrRideDetails, error: rideError } = useSWR(
@@ -133,6 +135,7 @@ const RidePage = () => {
       router.push("/dashboard");
     }
   }, [swrRideDetails, router]);
+
   const mapRef = useRef();
 
   const onMapLoad = useCallback((map: any) => {
@@ -401,55 +404,58 @@ const RidePage = () => {
   }, [rideId, router]);
 
   useEffect(() => {
-    const updateDirections = () => {
-      if (!mapRef.current || !driverLocation || !(pickupLocation || dropoffLocation)) return;
+    if (!mapRef.current || !driverLocation || !(pickupLocation || dropoffLocation)) return;
 
-      const destination = isPickedUp ? dropoffLocation : pickupLocation;
-      if (!destination) return;
+    const destination = isPickedUp ? dropoffLocation : pickupLocation;
+    if (!destination) return;
 
-      let stops = [];
-      if (rideDetails?.stops) {
-        try {
-          stops = Array.isArray(rideDetails.stops)
-            ? rideDetails.stops
-            : JSON.parse(rideDetails.stops);
-        } catch (error) {
-          console.error("Error parsing stops:", error);
+    let stops = [];
+    if (rideDetails?.stops) {
+      try {
+        stops = Array.isArray(rideDetails.stops)
+          ? rideDetails.stops
+          : JSON.parse(rideDetails.stops);
+      } catch (error) {
+        console.error("Error parsing stops:", error);
+      }
+    }
+
+    const waypoints = isPickedUp && stops.length > 0 ? stops.map((stop: { lat: number, lng: number }) => ({
+      location: new google.maps.LatLng(stop.lat, stop.lng),
+      stopover: true,
+    })) : [];
+
+    const directionsService = new google.maps.DirectionsService();
+    directionsService.route(
+      {
+        origin: driverLocation,
+        destination: destination,
+        travelMode: google.maps.TravelMode.DRIVING,
+        waypoints: waypoints,
+      },
+      (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          setDirections(result);
+          if (result.routes && result.routes[0] && result.routes[0].legs && result.routes[0].legs[0]) {
+            const duration = result.routes[0]?.legs[0]?.duration?.text;
+            setEta(duration ?? "");
+          }
+        } else {
+          console.error(`Error fetching directions: ${status}`);
         }
       }
+    );
 
-      const waypoints = isPickedUp && stops.length > 0 ? stops.map((stop: { lat: number, lng: number }) => ({
-        location: new google.maps.LatLng(stop.lat, stop.lng),
-        stopover: true,
-      })) : [];
-
-      const directionsService = new google.maps.DirectionsService();
-      directionsService.route(
-        {
-          origin: driverLocation,
-          destination: destination,
-          travelMode: google.maps.TravelMode.DRIVING,
-          waypoints: waypoints,
-        },
-        (result, status) => {
-          if (status === google.maps.DirectionsStatus.OK && result) {
-            setDirections(result);
-            if (result.routes && result.routes[0] && result.routes[0].legs && result.routes[0].legs[0]) {
-              const duration = result.routes[0]?.legs[0]?.duration?.text;
-              setEta(duration ?? "");
-            }
-          } else {
-            console.error(`Error fetching directions: ${status}`);
-          }
-        }
-      );
-    };
-
-    const intervalId = setInterval(updateDirections, 0); // Update directions every frame
-    return () => clearInterval(intervalId);
   }, [driverLocation, pickupLocation, dropoffLocation, isPickedUp, rideDetails]);
 
 
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setShowMapOverlay(true); // Show overlay after a delay
+    }, 10000); // 5-second delay
+
+    return () => clearTimeout(timerId);
+  }, []);
 
   
   const openInMaps = async () => {
@@ -525,8 +531,6 @@ const RidePage = () => {
     }
   };
 
-  const [showOverlay, setShowOverlay] = useState(false);
-
   const handlePhotoClick = () => {
     setShowOverlay(true);
   };
@@ -584,6 +588,22 @@ const RidePage = () => {
                 )}
               {directions && <DirectionsRenderer directions={directions} />}
             </GoogleMap>
+          )}
+
+          {showMapOverlay && (
+            <div className="z-49 fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+              <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+                <p className="mb-4 text-lg font-semibold">
+                  Click below to open directions in Google Maps:
+                </p>
+                <button 
+                  onClick={openInMaps}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+                >
+                  Open In Maps
+                </button>
+              </div>
+            </div>
           )}
 
           <div className="fixed bottom-0 left-0 w-full h-[21vh] bg-white border-t border-gray-200 shadow-lg rounded-t-lg p-4 z-50">

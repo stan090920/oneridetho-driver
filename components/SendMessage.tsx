@@ -6,6 +6,7 @@ import axios from "axios";
 
 interface SendMessageProps {
   rideId: number;
+  customerEmail: string;
 }
 
 interface Driver {
@@ -14,7 +15,7 @@ interface Driver {
   photoUrl?: string;
 }
 
-const SendMessage: React.FC<SendMessageProps> = ({ rideId }) => {
+const SendMessage: React.FC<SendMessageProps> = ({ rideId, customerEmail }) => {
   const [value, setValue] = useState("");
   const { data: session } = useSession();
   const [driver, setDriver] = useState<Driver | null>(null);
@@ -57,11 +58,29 @@ const SendMessage: React.FC<SendMessageProps> = ({ rideId }) => {
           uid: userId,
           rideId,
         });
+
+        // Send email to the customer
+        await fetch("/api/send-notification", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            recipient_email: customerEmail,
+            subject: "New Message from your driver",
+            text: `A new message has been sent regarding ride ID: ${rideId}. Please check your messages.`,
+            html: `<p>A new message has been sent regarding ride ID: ${rideId}. Please check your messages.</p>`,
+          }),
+        });
+
+        setValue("");
       } else {
+        setValue("");
         alert("User session not found");
       }
     } catch (error) {
       console.error(error);
+      setValue("");
     }
 
     setValue("");
