@@ -96,7 +96,7 @@ export default async function handler(
           } else if (status === "Completed") {
             const ratingLink = `https://www.oneridetho.com/rides/${rideIdNumber}`;
             await twilioClient.messages.create({
-              body: `Thank you for riding with us. Please rate your driver here: ${ratingLink}`,
+              body: `Thank you for riding with us. Please go to ${ratingLink} to rate your driver.`,
               from: process.env.TWILIO_PHONE_NUMBER,
               to: updatedRide.user.phone,
             });

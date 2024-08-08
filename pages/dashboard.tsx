@@ -149,7 +149,6 @@ const Dashboard = () => {
   const [scheduledPickupTime, setScheduledPickupTime] = useState("");
   const [inProgressRides, setInProgressRides] = useState<Ride[]>([]);
   const [driverLocation, setDriverLocation] = useState({ lat: 0, lng: 0 });
-  const [distance, setDistance] = useState<string | null>(null);
   const [eta, setEta] = useState<string | null>(null);
 
 
@@ -651,7 +650,6 @@ const Dashboard = () => {
         ) {
           const route = result.routes[0].legs[0];
           if (route.distance && route.duration) {
-            setDistance(route.distance.text);
             setEta(route.duration.text);
           } else {
             console.error("Distance or duration information is missing");
@@ -663,14 +661,6 @@ const Dashboard = () => {
     );
   };
 
-  useEffect(() => {
-    if (distance) {
-      const kmValue = parseFloat(distance.split(" ")[0]);
-      const milesValue = kmValue * 0.621371;
-      const formattedMiles = `${milesValue.toFixed(2)} miles`;
-      setDistance(formattedMiles);
-    }
-  }, [distance]);
 
   const mapOptions = {
     fullscreenControl: false,
@@ -746,9 +736,9 @@ const Dashboard = () => {
             stops={selectedRide.stops ? parseStops(selectedRide.stops) : []}
           />
 
-          {distance && eta && (
+          {eta && (
             <div className="absolute top-0 left-0 bg-white p-4 rounded-b-[16px] shadow-md w-full text-center">
-              <p>{`${distance}, ${eta} from Pickup`}</p>
+              <p>{`${eta} from Pickup`}</p>
             </div>
           )}
 
